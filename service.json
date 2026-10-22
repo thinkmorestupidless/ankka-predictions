@@ -1,0 +1,7 @@
+{
+  "name": "ankka-predictions",
+  "service": {
+    "image": "ankka-predictions:latest",
+    "runtime": "0.12.0"
+  }
+}

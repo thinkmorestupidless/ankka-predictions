@@ -1,0 +1,276 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1060" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" aria-labelledby="title desc">
+  <title id="title">The casino control plane, its brands and a liquidity pool</title>
+  <desc id="desc">One hub cluster and three spoke clusters. The hub is eitheror's own ankka installation: its gateway, control plane and operator, and the realm every spoke's installation trusts, where eitheror staff sign in. On it runs one project, casino-control-plane, with four services: console, eitheror's backoffice over every installation, brand and module, whose writes go to the brand that owns the entity; entitlements, the home of the entitlement entities that say which modules a brand runs, which pool it joins and what it is billed; releases, the home of the release entities that carry module versions and the channel each brand follows; and mirrors, follower copies of every brand's module entities, read only, with any write forwarded to the brand. Beside them, fleet and billing views rebuilt from the mirrored journals and the hub's own, holding nothing personal because players never leave their brand, and the project's Postgres with the hub-homed entities and the mirrored copies. An eitheror admin reaches the console through the hub's gateway. Each spoke cluster has its own ankka installation, trusting the hub realm, and a replication link dialled outward from the spoke: module entities go up to the hub, entitlement and release entities come down. The first spoke is a shared cluster with one installation hosting two brands and a pool. Each brand is one project: a core of wallet, players, kyc, responsible-gambling, payouts and modules, where modules homes the brand's module entity and deploys the enabled modules through the local control plane; then the enabled modules, here casino (game providers, rounds and bets) and predictions (forecasts and web in the brand, markets and exchange from the pool). Each of these two brands' wallets holds one clearing account, a non-player account owned by the pool and the pool's counterparty in that wallet. The pool, pool-north, is a third project on the same installation: markets, one catalogue and one price for every member; exchange, one book per outcome, where an order carries its brand and player; clearing, where every move is local, between a player and their own brand's clearing account, the pool keeps a net per brand and the operator settles the net; gates, which asks may-bet and kyc of the player's brand over grants; and membership, an entitlement at the hub, limited to brands on the same installation. Arrows from clearing reach the clearing account in each member brand's wallet. A brand operator reaches their own brand's backoffice, and players their brand's app, through the shared installation's gateway. The second spoke is a dedicated cluster for one licensee, brand acme, with the same core and only the casino module: no predictions, because its entitlement does not name it. The third spoke is a dedicated cluster for brand nord, with the core, casino, and predictions in the project with its own book and no pool. Outside, the deployments repository ankka-modules-deployments holds each cluster, its ankka version and the spoke template; Flux on each cluster pulls it; it carries platform versions only, never a module.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .ink { fill: #1f2328; }
+    .muted { fill: #59636e; }
+    .box { fill: #f6f8fa; stroke: #afb8c1; stroke-width: 1.2; }
+    .hot { fill: #fff4ec; stroke: #c2410c; stroke-width: 1.5; }
+    .cluster { fill: none; stroke: #59636e; stroke-width: 1.5; }
+    .ns { fill: none; stroke: #8c959f; stroke-width: 1.2; stroke-dasharray: 5 4; }
+    .line { stroke: #1f2328; stroke-width: 1.4; fill: none; }
+    .dash { stroke: #59636e; stroke-width: 1.3; fill: none; stroke-dasharray: 4 3; }
+    .head { fill: #1f2328; }
+    .headmuted { fill: #59636e; }
+    text { font-size: 13px; }
+    .title { font-size: 14px; font-weight: 600; }
+    .small { font-size: 11.5px; }
+    .mono { font-size: 11.5px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .label { font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; }
+      .ink { fill: #e6edf3; }
+      .muted { fill: #9198a1; }
+      .box { fill: #161b22; stroke: #3d444d; }
+      .hot { fill: #2a1a10; stroke: #ff8a4c; }
+      .cluster { stroke: #9198a1; }
+      .ns { stroke: #656c76; }
+      .line { stroke: #e6edf3; }
+      .dash { stroke: #9198a1; }
+      .head { fill: #e6edf3; }
+      .headmuted { fill: #9198a1; }
+    }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="head"/>
+    </marker>
+    <marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="headmuted"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1200" height="1060" rx="12"/>
+
+  <!-- Outside -->
+  <text class="label muted" x="24" y="64">OUTSIDE</text>
+  <rect class="box" x="24" y="84" width="180" height="70" rx="8"/>
+  <text class="title ink" x="114" y="108" text-anchor="middle">eitheror admin</text>
+  <text class="small muted" x="114" y="126" text-anchor="middle">the console, with a token</text>
+  <text class="small muted" x="114" y="142" text-anchor="middle">from the hub realm</text>
+  <line class="line" x1="204" y1="119" x2="244" y2="119" marker-end="url(#a)"/>
+
+  <rect class="box" x="24" y="176" width="180" height="70" rx="8"/>
+  <text class="title ink" x="114" y="200" text-anchor="middle">Brand operator</text>
+  <text class="small muted" x="114" y="218" text-anchor="middle">their own backoffice; sees</text>
+  <text class="small muted" x="114" y="234" text-anchor="middle">their modules, no other brand</text>
+  <path class="line" d="M204,211 L220,211 L220,448 L244,448" marker-end="url(#a)"/>
+
+  <rect class="box" x="24" y="268" width="180" height="70" rx="8"/>
+  <text class="title ink" x="114" y="292" text-anchor="middle">Players</text>
+  <text class="small muted" x="114" y="310" text-anchor="middle">a brand's app, a token from</text>
+  <text class="small muted" x="114" y="326" text-anchor="middle">that brand's player realm</text>
+  <path class="line" d="M204,303 L212,303 L212,460 L244,460" marker-end="url(#a)"/>
+
+  <rect class="box" x="24" y="560" width="180" height="116" rx="8"/>
+  <text class="title ink" x="114" y="584" text-anchor="middle">Deployments repo</text>
+  <text class="mono muted" x="114" y="601" text-anchor="middle">ankka-modules-deployments</text>
+  <text class="small muted" x="114" y="619" text-anchor="middle">each cluster, its ankka</text>
+  <text class="small muted" x="114" y="634" text-anchor="middle">version, the spoke template;</text>
+  <text class="small muted" x="114" y="649" text-anchor="middle">Flux on each cluster pulls it.</text>
+  <text class="small muted" x="114" y="664" text-anchor="middle">Platform only, never a module</text>
+  <line class="dash" x1="204" y1="610" x2="226" y2="610" marker-end="url(#m)"/>
+
+  <!-- Hub cluster -->
+  <rect class="cluster" x="228" y="40" width="948" height="300" rx="14"/>
+  <text class="label muted" x="246" y="64">HUB CLUSTER · eitheror's installation</text>
+
+  <rect class="box" x="246" y="84" width="150" height="100" rx="8"/>
+  <text class="title ink" x="321" y="108" text-anchor="middle">Installation</text>
+  <text class="small muted" x="321" y="127" text-anchor="middle">gateway, control plane,</text>
+  <text class="small muted" x="321" y="143" text-anchor="middle">operator; the hub's own,</text>
+  <text class="small muted" x="321" y="159" text-anchor="middle">like any other</text>
+
+  <rect class="box" x="246" y="200" width="150" height="120" rx="8"/>
+  <text class="title ink" x="321" y="224" text-anchor="middle">Realm</text>
+  <text class="small muted" x="321" y="243" text-anchor="middle">eitheror staff sign in</text>
+  <text class="small muted" x="321" y="259" text-anchor="middle">here; every spoke's</text>
+  <text class="small muted" x="321" y="275" text-anchor="middle">installation trusts it:</text>
+  <text class="small muted" x="321" y="291" text-anchor="middle">one realm, hub and</text>
+  <text class="small muted" x="321" y="307" text-anchor="middle">spokes</text>
+
+  <rect class="ns" x="412" y="84" width="748" height="236" rx="10"/>
+  <text class="small muted" x="424" y="102">casino-control-plane: the project, one namespace</text>
+
+  <rect class="hot" x="428" y="112" width="170" height="92" rx="8"/>
+  <text class="title ink" x="513" y="136" text-anchor="middle">console</text>
+  <text class="small muted" x="513" y="154" text-anchor="middle">eitheror's backoffice: every</text>
+  <text class="small muted" x="513" y="170" text-anchor="middle">installation, brand, module;</text>
+  <text class="small muted" x="513" y="186" text-anchor="middle">a write goes to its home</text>
+
+  <rect class="hot" x="614" y="112" width="170" height="92" rx="8"/>
+  <text class="title ink" x="699" y="136" text-anchor="middle">entitlements</text>
+  <text class="small muted" x="699" y="154" text-anchor="middle">home of entitlement entities:</text>
+  <text class="small muted" x="699" y="170" text-anchor="middle">a brand's modules, its pool,</text>
+  <text class="small muted" x="699" y="186" text-anchor="middle">and what it is billed</text>
+
+  <rect class="hot" x="800" y="112" width="170" height="92" rx="8"/>
+  <text class="title ink" x="885" y="136" text-anchor="middle">releases</text>
+  <text class="small muted" x="885" y="154" text-anchor="middle">home of release entities:</text>
+  <text class="small muted" x="885" y="170" text-anchor="middle">module versions and the</text>
+  <text class="small muted" x="885" y="186" text-anchor="middle">channel each brand follows</text>
+
+  <rect class="box" x="986" y="112" width="158" height="92" rx="8"/>
+  <text class="title ink" x="1065" y="136" text-anchor="middle">mirrors</text>
+  <text class="small muted" x="1065" y="154" text-anchor="middle">followers of every brand's</text>
+  <text class="small muted" x="1065" y="170" text-anchor="middle">module entities, read only;</text>
+  <text class="small muted" x="1065" y="186" text-anchor="middle">a write is forwarded home</text>
+
+  <rect class="box" x="428" y="220" width="356" height="84" rx="8"/>
+  <text class="title ink" x="606" y="244" text-anchor="middle">fleet and billing views</text>
+  <text class="small muted" x="606" y="263" text-anchor="middle">rebuilt from the mirrored journals and the hub's own;</text>
+  <text class="small muted" x="606" y="279" text-anchor="middle">nothing personal: players never leave their brand</text>
+
+  <rect class="box" x="800" y="220" width="344" height="84" rx="8"/>
+  <text class="title ink" x="972" y="244" text-anchor="middle">Postgres</text>
+  <text class="small muted" x="972" y="263" text-anchor="middle">the project's journal: the hub-homed entities</text>
+  <text class="small muted" x="972" y="279" text-anchor="middle">and the mirrored copies</text>
+
+  <!-- Replication links, dialled from the spokes -->
+  <line class="dash" x1="500" y1="426" x2="500" y2="342" marker-start="url(#m)" marker-end="url(#m)"/>
+  <text class="small ink" x="508" y="366">replication, dialled from the spoke:</text>
+  <text class="small muted" x="508" y="382">module entities up; entitlements and releases down</text>
+  <line class="dash" x1="964" y1="426" x2="964" y2="342" marker-start="url(#m)" marker-end="url(#m)"/>
+  <text class="small muted" x="956" y="374" text-anchor="end">replication</text>
+  <line class="dash" x1="1160" y1="426" x2="1160" y2="342" marker-start="url(#m)" marker-end="url(#m)"/>
+  <text class="small muted" x="1152" y="374" text-anchor="end">replication</text>
+
+  <!-- Shared cluster: two brands and a pool on one installation -->
+  <rect class="cluster" x="228" y="392" width="556" height="638" rx="14"/>
+  <text class="label muted" x="246" y="416">SHARED CLUSTER · one installation, two brands and a pool</text>
+
+  <rect class="box" x="246" y="428" width="522" height="40" rx="8"/>
+  <text class="small ink" x="507" y="446" text-anchor="middle" font-weight="600">Installation: gateway, control plane, operator · trusts the hub realm</text>
+  <text class="small muted" x="507" y="461" text-anchor="middle">one player realm per brand · modules are deployed through this control plane</text>
+
+  <!-- brand bolt -->
+  <rect class="ns" x="246" y="484" width="344" height="256" rx="10"/>
+  <text class="small muted" x="258" y="502">brand bolt: the project, one namespace</text>
+  <rect class="hot" x="260" y="514" width="316" height="72" rx="6"/>
+  <text class="title ink" x="272" y="534">core</text>
+  <text class="small muted" x="312" y="534">what every brand runs</text>
+  <text class="small ink" x="272" y="552">wallet · players · kyc · rg · payouts · modules</text>
+  <text class="small muted" x="272" y="570">modules homes the module entity and deploys the rest</text>
+  <text class="small muted" x="260" y="606">modules enabled</text>
+  <rect class="box" x="260" y="614" width="150" height="64" rx="6"/>
+  <text class="small ink" x="335" y="636" text-anchor="middle" font-weight="600">casino</text>
+  <text class="small muted" x="335" y="654" text-anchor="middle">game providers,</text>
+  <text class="small muted" x="335" y="668" text-anchor="middle">rounds and bets</text>
+  <rect class="box" x="426" y="614" width="150" height="64" rx="6"/>
+  <text class="small ink" x="501" y="636" text-anchor="middle" font-weight="600">predictions</text>
+  <text class="small muted" x="501" y="654" text-anchor="middle">forecasts, web; markets</text>
+  <text class="small muted" x="501" y="668" text-anchor="middle">and exchange: the pool's</text>
+  <rect class="box" x="260" y="690" width="316" height="44" rx="6"/>
+  <text class="small ink" x="272" y="708" font-weight="600">in the wallet: a clearing account</text>
+  <text class="small muted" x="272" y="724">non-player; owned by pool-north; its counterparty</text>
+
+  <!-- brand cato -->
+  <rect class="ns" x="246" y="756" width="344" height="256" rx="10"/>
+  <text class="small muted" x="258" y="774">brand cato: the project, one namespace</text>
+  <rect class="hot" x="260" y="786" width="316" height="72" rx="6"/>
+  <text class="title ink" x="272" y="806">core</text>
+  <text class="small muted" x="312" y="806">the same six services</text>
+  <text class="small ink" x="272" y="824">wallet · players · kyc · rg · payouts · modules</text>
+  <text class="small muted" x="272" y="842">its own players, its own realm, its own journal</text>
+  <text class="small muted" x="260" y="878">modules enabled</text>
+  <rect class="box" x="260" y="886" width="150" height="64" rx="6"/>
+  <text class="small ink" x="335" y="908" text-anchor="middle" font-weight="600">casino</text>
+  <text class="small muted" x="335" y="926" text-anchor="middle">game providers,</text>
+  <text class="small muted" x="335" y="940" text-anchor="middle">rounds and bets</text>
+  <rect class="box" x="426" y="886" width="150" height="64" rx="6"/>
+  <text class="small ink" x="501" y="908" text-anchor="middle" font-weight="600">predictions</text>
+  <text class="small muted" x="501" y="926" text-anchor="middle">forecasts, web; markets</text>
+  <text class="small muted" x="501" y="940" text-anchor="middle">and exchange: the pool's</text>
+  <rect class="box" x="260" y="962" width="316" height="44" rx="6"/>
+  <text class="small ink" x="272" y="980" font-weight="600">in the wallet: a clearing account</text>
+  <text class="small muted" x="272" y="996">non-player; owned by pool-north; its counterparty</text>
+
+  <!-- the pool -->
+  <rect class="ns" x="604" y="484" width="164" height="528" rx="10"/>
+  <text class="small muted" x="616" y="502">pool-north: the project</text>
+  <rect class="box" x="616" y="526" width="140" height="70" rx="6"/>
+  <text class="small ink" x="686" y="546" text-anchor="middle" font-weight="600">markets</text>
+  <text class="small muted" x="686" y="563" text-anchor="middle">one catalogue, one</text>
+  <text class="small muted" x="686" y="578" text-anchor="middle">price for every member</text>
+  <rect class="hot" x="616" y="608" width="140" height="84" rx="6"/>
+  <text class="small ink" x="686" y="628" text-anchor="middle" font-weight="600">exchange</text>
+  <text class="small muted" x="686" y="645" text-anchor="middle">one book per outcome;</text>
+  <text class="small muted" x="686" y="660" text-anchor="middle">an order carries its</text>
+  <text class="small muted" x="686" y="675" text-anchor="middle">brand and player</text>
+  <rect class="hot" x="616" y="704" width="140" height="124" rx="6"/>
+  <text class="small ink" x="686" y="724" text-anchor="middle" font-weight="600">clearing</text>
+  <text class="small muted" x="686" y="741" text-anchor="middle">every move is local:</text>
+  <text class="small muted" x="686" y="756" text-anchor="middle">a player and their own</text>
+  <text class="small muted" x="686" y="771" text-anchor="middle">brand's clearing</text>
+  <text class="small muted" x="686" y="786" text-anchor="middle">account; a net per</text>
+  <text class="small muted" x="686" y="801" text-anchor="middle">brand; the operator</text>
+  <text class="small muted" x="686" y="816" text-anchor="middle">settles the net</text>
+  <rect class="box" x="616" y="840" width="140" height="84" rx="6"/>
+  <text class="small ink" x="686" y="860" text-anchor="middle" font-weight="600">gates</text>
+  <text class="small muted" x="686" y="877" text-anchor="middle">may-bet and kyc asked</text>
+  <text class="small muted" x="686" y="892" text-anchor="middle">of the player's brand,</text>
+  <text class="small muted" x="686" y="907" text-anchor="middle">over grants</text>
+  <rect class="box" x="616" y="934" width="140" height="72" rx="6"/>
+  <text class="small ink" x="686" y="954" text-anchor="middle" font-weight="600">membership</text>
+  <text class="small muted" x="686" y="971" text-anchor="middle">an entitlement at the</text>
+  <text class="small muted" x="686" y="986" text-anchor="middle">hub; one installation</text>
+
+  <!-- clearing -> each member's clearing account -->
+  <path class="line" d="M614,766 L596,766 L596,712 L578,712" marker-end="url(#a)"/>
+  <path class="line" d="M596,766 L596,984 L578,984" marker-end="url(#a)"/>
+
+  <!-- Dedicated cluster: casino only -->
+  <rect class="cluster" x="800" y="392" width="184" height="638" rx="14"/>
+  <text class="label muted" x="812" y="416">DEDICATED CLUSTER</text>
+  <rect class="box" x="812" y="428" width="160" height="52" rx="8"/>
+  <text class="small ink" x="892" y="447" text-anchor="middle" font-weight="600">Installation</text>
+  <text class="small muted" x="892" y="463" text-anchor="middle">trusts the hub realm</text>
+  <rect class="ns" x="812" y="496" width="160" height="330" rx="10"/>
+  <text class="small muted" x="824" y="514">brand acme: the project</text>
+  <rect class="hot" x="824" y="526" width="136" height="124" rx="6"/>
+  <text class="title ink" x="836" y="546">core</text>
+  <text class="small ink" x="836" y="564">wallet · players</text>
+  <text class="small ink" x="836" y="579">kyc · rg · payouts</text>
+  <text class="small muted" x="836" y="596">modules: deploys</text>
+  <text class="small muted" x="836" y="611">through the local</text>
+  <text class="small muted" x="836" y="626">control plane</text>
+  <text class="small muted" x="824" y="672">modules enabled</text>
+  <rect class="box" x="824" y="680" width="136" height="64" rx="6"/>
+  <text class="small ink" x="892" y="702" text-anchor="middle" font-weight="600">casino</text>
+  <text class="small muted" x="892" y="720" text-anchor="middle">game providers,</text>
+  <text class="small muted" x="892" y="734" text-anchor="middle">rounds and bets</text>
+  <text class="small muted" x="892" y="772" text-anchor="middle">no predictions: the</text>
+  <text class="small muted" x="892" y="787" text-anchor="middle">entitlement does</text>
+  <text class="small muted" x="892" y="802" text-anchor="middle">not name it</text>
+  <text class="small muted" x="892" y="870" text-anchor="middle">one licensee, its own</text>
+  <text class="small muted" x="892" y="885" text-anchor="middle">cluster and installation</text>
+
+  <!-- Dedicated cluster: casino and predictions in the project -->
+  <rect class="cluster" x="1000" y="392" width="176" height="638" rx="14"/>
+  <text class="label muted" x="1012" y="416">DEDICATED CLUSTER</text>
+  <rect class="box" x="1012" y="428" width="152" height="52" rx="8"/>
+  <text class="small ink" x="1088" y="447" text-anchor="middle" font-weight="600">Installation</text>
+  <text class="small muted" x="1088" y="463" text-anchor="middle">trusts the hub realm</text>
+  <rect class="ns" x="1012" y="496" width="152" height="380" rx="10"/>
+  <text class="small muted" x="1024" y="514">brand nord: the project</text>
+  <rect class="hot" x="1024" y="526" width="128" height="124" rx="6"/>
+  <text class="title ink" x="1036" y="546">core</text>
+  <text class="small ink" x="1036" y="564">wallet · players</text>
+  <text class="small ink" x="1036" y="579">kyc · rg · payouts</text>
+  <text class="small muted" x="1036" y="596">modules: deploys</text>
+  <text class="small muted" x="1036" y="611">through the local</text>
+  <text class="small muted" x="1036" y="626">control plane</text>
+  <text class="small muted" x="1024" y="672">modules enabled</text>
+  <rect class="box" x="1024" y="680" width="128" height="56" rx="6"/>
+  <text class="small ink" x="1088" y="702" text-anchor="middle" font-weight="600">casino</text>
+  <text class="small muted" x="1088" y="720" text-anchor="middle">game providers</text>
+  <rect class="box" x="1024" y="748" width="128" height="110" rx="6"/>
+  <text class="small ink" x="1088" y="768" text-anchor="middle" font-weight="600">predictions</text>
+  <text class="small muted" x="1088" y="786" text-anchor="middle">markets, exchange,</text>
+  <text class="small muted" x="1088" y="801" text-anchor="middle">forecasts, web: its</text>
+  <text class="small muted" x="1088" y="816" text-anchor="middle">own book, in the</text>
+  <text class="small muted" x="1088" y="831" text-anchor="middle">project; no pool</text>
+  <text class="small muted" x="1088" y="910" text-anchor="middle">one licensee, its own</text>
+  <text class="small muted" x="1088" y="925" text-anchor="middle">cluster and installation</text>
+</svg>
