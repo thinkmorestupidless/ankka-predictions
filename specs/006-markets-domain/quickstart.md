@@ -15,8 +15,7 @@ each event; every event kind occurs, `Voided` after `Resolved` among them.
 sbt -Dpredictions.sequences=1000 marketsDomain/test   # a quick run
 ```
 
-A check that can fail: in `Market.scala` let a correction through after the window (compare with
-`isAfter` instead of `isBefore`), and watch "a resolution may not be corrected after the review
+A check that can fail: in `Market.scala` drop the window check from `correct`, and watch "a resolution may not be corrected after the review
 window" go red; put it back.
 
 A second: in `Drafting.scala` stop comparing the resolution criteria of an open market, and watch
