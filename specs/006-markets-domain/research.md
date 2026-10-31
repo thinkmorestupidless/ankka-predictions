@@ -195,6 +195,11 @@ categories and currencies).
 - **2026-10-31, the baseline (T001).** `sbt marketsDomain/test`: 5 passed (`MarketStubSuite`), 48
   ignored (the 43 scenarios of `features/markets/` and the five of `domain.feature`, each naming
   the spec or suite that lifts it). `sbt marketsComponents/test`: 9 passed, 4 ignored.
+- **2026-10-31, `notBuilt` goes last.** T002 keeps `Refusals.notBuilt` until the last command
+  body (T015) replaces `apply`'s fall-through, so every commit between compiles.
+- **2026-10-31, a description-only change.** `Drafting.change` checks a change that touches only
+  the description against the description's bound alone: an open market whose close has passed is
+  still allowed its description.
 
 ## Requests
 
