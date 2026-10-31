@@ -319,3 +319,7 @@ All four by Trevor, 2026-10-31, through the design run.
 None new. Spec 004's two to ankka stand (a `CommandError`'s details across the component client;
 a scheduler on an entity's context), and its one to ankka-modules (`notes/casino-requests.md`
 item 9: a split charged from a reservation, which the pool trade of R3 needs on the ledger side).
+
+## Design finished
+
+2026-10-31: analyze reported nothing above LOW.

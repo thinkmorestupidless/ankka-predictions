@@ -48,7 +48,7 @@ positive whole number" is one rule, refused `quantity`.
 | `limit` | `limit` | `maximum order cost` or `maximum position` |
 | `quantity held` | `held` | a sell or merge of more than is held free |
 | `owner` | `owner` | a cancel by someone else |
-| `id` | `id` | a known order id with other fields |
+| `id` | `id` | a known order id with other fields; a cancel of an order never accepted |
 | `key` | `key` | a known set key with other fields |
 | `not fillable whole` | | a fill-whole order the books cannot fill whole |
 | `ledger unavailable` | | the components' (spec 004 R8); never the domain's |
