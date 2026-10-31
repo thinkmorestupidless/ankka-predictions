@@ -73,6 +73,10 @@ object Market:
 
   private def check(refusal: Option[Refusal]): Either[Refusal, Unit] = refusal.toLeft(())
 
+  /** The definition of a market past its draft; a value built by hand without one is refused. */
+  private def defined(market: Market): Either[Refusal, Definition] =
+    market.definition.toRight(Refusals.state(market.state))
+
   private def reason(text: String): Either[Refusal, Unit] =
     Either.cond(!Drafting.blank(text), (), Refusals.field("reason"))
 
@@ -110,7 +114,7 @@ object Market:
   private def approve(market: Market, c: MarketCommand.Approve): Either[Refusal, Decision] =
     for
       _ <- in(market, MarketState.Draft)
-      d = market.definition.get
+      d <- defined(market)
       _ <- Either.cond(d.close.isAfter(c.at), (), Refusals.close(d.close))
       approved = MarketEvent.Approved(c.operator, c.at)
       opensNow = d.openTime.forall(!_.isAfter(c.at))
@@ -145,8 +149,9 @@ object Market:
   /** At or after the close, as it comes; before it, an operator and a reason (research R7). */
   private def close(market: Market, c: MarketCommand.Close): Either[Refusal, Decision] =
     for
-      _ <- in(market, MarketState.Open, MarketState.Suspended)
-      due   = market.definition.get.close
+      _    <- in(market, MarketState.Open, MarketState.Suspended)
+      defn <- defined(market)
+      due   = defn.close
       early = c.at.isBefore(due)
       _ <- Either.cond(
         !early || (c.operator.isDefined && c.reason.exists(!Drafting.blank(_))),
@@ -159,7 +164,7 @@ object Market:
   private def moveClose(market: Market, c: MarketCommand.MoveClose): Either[Refusal, Decision] =
     for
       _ <- in(market, MarketState.Open, MarketState.Suspended)
-      d = market.definition.get
+      d <- defined(market)
       _ <- Either.cond(c.close.isAfter(d.close), (), Refusals.close(c.close))
       _ <- reason(c.reason)
       closes   = c.close.atZone(ZoneOffset.UTC).toLocalDate
@@ -235,10 +240,10 @@ object Market:
 
   private def finalise(market: Market, c: MarketCommand.Finalise): Either[Refusal, Decision] =
     for
-      _ <- in(market, MarketState.Resolved, MarketState.Void)
-      end = market.nextDue.get
-      _ <- Either.cond(!c.at.isBefore(end), (), Refusals.reviewWindow(end))
-      d <- decide(market, Vector(MarketEvent.Final(c.at)))
+      _   <- in(market, MarketState.Resolved, MarketState.Void)
+      end <- market.nextDue.toRight(Refusals.state(market.state))
+      _   <- Either.cond(!c.at.isBefore(end), (), Refusals.reviewWindow(end))
+      d   <- decide(market, Vector(MarketEvent.Final(c.at)))
     yield d
 
   private def decide(market: Market, events: Vector[MarketEvent]): Either[Refusal, Decision] =
