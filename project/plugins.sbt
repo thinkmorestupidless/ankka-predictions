@@ -1,2 +1,3 @@
-// Packaging the service as a container image (`sbt Docker/publishLocal`).
-addSbtPlugin("com.github.sbt" % "sbt-native-packager" % "1.11.7")
+addSbtPlugin("org.scalameta"  % "sbt-scalafmt"   % "2.6.2")
+// Publishing on a `v*` tag; it brings sbt-dynver, so the version is the nearest tag's.
+addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.12.1")

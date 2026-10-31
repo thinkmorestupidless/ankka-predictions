@@ -1,94 +1,76 @@
-// ankka-predictions — an ankka service.
+// ankka-predictions: the markets and exchange libraries eitheror's predictions module composes.
 //
-// ankka's libraries come from Maven Central (or ~/.ivy2/local while the platform is being
-// developed). The same version is declared in service.json as `runtime`: change both together
-// when upgrading — see README.md, "Upgrading ankka".
-val ankkaVersion = "0.12.0"
+// Four modules (spec 004, research R1). The two domains depend on `ankka-core` alone, so "a rule
+// reads no clock, wallet or network" is a fact of the build and the pom, not a discipline; the two
+// components modules hold the entities, the workflow, the views and the timers written against
+// them, with the outside world behind ports the consumer supplies. A `v*` tag publishes the four to
+// Maven Central; the version is sbt-dynver's from the tag.
 
-// The service name is also the image name, the descriptor's name, and — once exposed — the first
-// label of the hostname, so it has to be one Kubernetes and DNS accept. Checked here so that a
-// name the template's normalisation could not fix fails at the first `sbt` invocation, with the
-// rule, rather than at `ankka services apply`.
-val serviceName = "ankka-predictions"
-// (Top-level statements in an sbt build must be settings or vals, hence the val.)
-val serviceNameChecked: String = {
-  val valid = serviceName.matches("[a-z]([-a-z0-9]{0,61}[a-z0-9])?")
-  if (!valid)
-    sys.error(
-      s"'$serviceName' is not a valid service name: lowercase letters, digits and hyphens, " +
-        "starting with a letter, not ending with a hyphen, at most 63 characters"
-    )
-  serviceName
-}
+import Dependencies.*
 
-// For the whole build, so a subproject added beside the service — the generated code of a gRPC
-// service definition, say — is built with the same Scala version.
-ThisBuild / scalaVersion := "3.9.0"
+ThisBuild / scalaVersion  := V.scala
+ThisBuild / organization  := "com.thinkmorestupidless"
+ThisBuild / versionScheme := Some("early-semver")
+
+ThisBuild / homepage := Some(url("https://github.com/thinkmorestupidless/ankka-predictions"))
+ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
+ThisBuild / developers := List(
+  Developer(
+    "thinkmorestupidless",
+    "Trevor Burton-McCreadie",
+    "",
+    url("https://github.com/thinkmorestupidless")
+  )
+)
+
+// Suites that start containers contend when they overlap. Do not undo it.
+Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
+
+lazy val common = Seq(
+  scalacOptions ++= Seq("-deprecation", "-feature", "-Wunused:all", "-Werror", "-source:3.7"),
+  javacOptions ++= Seq("--release", "21"),
+  Test / fork              := true,
+  Test / parallelExecution := false,
+  // The living features are at the repository's root, and a forked test JVM starts where this says.
+  Test / baseDirectory := (ThisBuild / baseDirectory).value,
+  libraryDependencies ++= Seq(munit % Test, ankkaTestkit % Test)
+)
+
+lazy val exchangeDomain = project
+  .in(file("modules/exchange-domain"))
+  .settings(common)
+  .settings(
+    name := "ankka-predictions-exchange-domain",
+    libraryDependencies ++= Seq(ankkaCore, munitScalacheck % Test)
+  )
+
+lazy val marketsDomain = project
+  .in(file("modules/markets-domain"))
+  .settings(common)
+  .settings(
+    name := "ankka-predictions-markets-domain",
+    libraryDependencies ++= Seq(ankkaCore, munitScalacheck % Test)
+  )
+
+lazy val exchangeComponents = project
+  .in(file("modules/exchange-components"))
+  .dependsOn(exchangeDomain)
+  .settings(common)
+  .settings(
+    name := "ankka-predictions-exchange-components",
+    libraryDependencies ++= Seq(ankkaSdk)
+  )
+
+lazy val marketsComponents = project
+  .in(file("modules/markets-components"))
+  .dependsOn(marketsDomain)
+  .settings(common)
+  .settings(
+    name := "ankka-predictions-markets-components",
+    libraryDependencies ++= Seq(ankkaSdk)
+  )
 
 lazy val root = project
   .in(file("."))
-  .enablePlugins(JavaAppPackaging, DockerPlugin)
-  .settings(
-    name         := serviceNameChecked,
-    scalacOptions ++= Seq("-deprecation", "-feature", "-Wunused:all"),
-    libraryDependencies ++= Seq(
-      "com.thinkmorestupidless" %% "ankka-sdk"     % ankkaVersion,
-      "com.thinkmorestupidless" %% "ankka-runtime" % ankkaVersion,
-      "com.thinkmorestupidless" %% "ankka-http"    % ankkaVersion,
-      // Exports this service's traces and metrics to the collector the installation names; with
-      // none named it starts nothing. Nothing in the code names it.
-      "com.thinkmorestupidless" %% "ankka-telemetry-otlp" % ankkaVersion,
-      // "com.thinkmorestupidless" %% "ankka-agent" % ankkaVersion,   // agents: uncomment
-      // "com.thinkmorestupidless" %% "ankka-auth-oidc" % ankkaVersion,   // your users' tokens: uncomment
-      "com.thinkmorestupidless" %% "ankka-testkit" % ankkaVersion % Test,
-      "org.scalameta"           %% "munit"         % "1.3.6"      % Test
-    ),
-    // The test kit starts a throwaway Postgres in Docker; a forked JVM keeps its lifecycle out of
-    // sbt's own process.
-    Test / fork := true,
-
-    // The version the image is tagged with. Locally sbt's own default; in CI the tag being
-    // released, or the commit for a manual run — see .github/workflows/deploy.yml.
-    version := sys.env.getOrElse("SERVICE_VERSION", "0.1.0-SNAPSHOT"),
-
-    // The image the descriptor names: <name>:<version> and <name>:latest, built into the local
-    // Docker daemon by `sbt Docker/publishLocal`. No registry is assumed; `kind load docker-image`
-    // puts it where a local cluster can see it.
-    Docker / packageName := serviceName,
-    // Unset, the image is tagged unqualified, which is what `kind load docker-image` wants. Set,
-    // the image is tagged for that registry and `sbt Docker/publish` pushes there — which is how
-    // the deploy workflow gets the image somewhere the cluster can pull from.
-    Docker / dockerRepository := sys.env.get("DOCKER_REPOSITORY"),
-    // Which architectures the image is built for. Unset, this machine's, which is what `kind load`
-    // wants and all `Docker/publishLocal` can do. Set, `Docker/publish` follows its ordinary build
-    // with `docker buildx build --platform <list> --push`, so one tag serves a cluster of either
-    // architecture; the deploy workflow sets both. Building for the architecture this machine is not
-    // needs buildx and QEMU (Docker Desktop and OrbStack have both).
-    dockerBuildxPlatforms := sys.env.get("ANKKA_IMAGE_PLATFORMS").toSeq.flatMap(_.split(',')).map(_.trim).filter(_.nonEmpty),
-    dockerBaseImage      := "eclipse-temurin:21-jre",
-    dockerUpdateLatest   := true,
-    dockerExposedPorts   := Seq(9000),
-    // A Docker tag may not contain '+'; a git-derived snapshot version might.
-    Docker / version     := version.value.replace('+', '-')
-  )
-
-// The platform's database schema, taken out of the ankka-runtime artifact into target/ddl, where
-// docker-compose.yml mounts it as Postgres' init directory. One copy of the schema — the
-// runtime's — and nothing to keep in step: `sbt schema` after every ankka upgrade.
-lazy val schema = taskKey[File]("Writes ankka's database schema from the runtime artifact into target/ddl")
-schema := {
-  val log = streams.value.log
-  val jar = (Compile / dependencyClasspath).value
-    .map(_.data)
-    .find(f => f.getName.startsWith("ankka-runtime_") && f.getName.endsWith(".jar"))
-    .getOrElse(sys.error("ankka-runtime is not on the classpath — is ankkaVersion published?"))
-  val out = target.value / "ddl"
-  IO.delete(out)
-  IO.createDirectory(out)
-  IO.unzip(jar, out, (entry: String) => entry.startsWith("ankka/ddl/") && entry.endsWith(".sql"))
-  val files = (out / "ankka" / "ddl").listFiles().toList.sortBy(_.getName)
-  files.foreach(f => IO.move(f, out / f.getName))
-  IO.delete(out / "ankka")
-  log.info(s"schema: ${files.map(_.getName).mkString(", ")} -> $out")
-  out
-}
+  .aggregate(exchangeDomain, marketsDomain, exchangeComponents, marketsComponents)
+  .settings(name := "ankka-predictions", publish / skip := true)

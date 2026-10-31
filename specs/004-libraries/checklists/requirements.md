@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain (one, in Edge Cases: how long an order may stay pending on an unreachable ledger, and whose rule that is)
+- [x] No [NEEDS CLARIFICATION] markers remain (the one in Edge Cases, an unreachable ledger, resolved by research R8 on 2026-10-31)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)

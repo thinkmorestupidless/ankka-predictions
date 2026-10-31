@@ -8,5 +8,9 @@ test:
 check:
     uvx --from "git+https://github.com/thinkmorestupidless/speckit-bdd@v0.2.0#subdirectory=checker" speckit-bdd check --root . --glossary GLOSSARY.md --features features --specs specs --specs-from 004
 
+# Format every Scala and sbt file, as CI checks them.
+fmt:
+    sbt scalafmtAll scalafmtSbt
+
 hooks:
     git config core.hooksPath .githooks

@@ -14,13 +14,13 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 
 ## Phase 1: Setup
 
-- [ ] T001 Remove the template's stub in one change (R1): `src/`, `service.json`, `docker-compose.yml`, `.github/workflows/deploy.yml`, the Docker and `schema` settings in `build.sbt`
-- [ ] T002 Create `project/Dependencies.scala` with `V.scala` 3.9.0, `V.ankka` (overridable by `-Dankka.version`), `V.munit` 1.3.6 and `V.scalacheck`, and `ankkaCore`, `ankkaSdk` and `ankkaTestkit`. Pin `V.ankka` at 0.14.2 (Trevor, 2026-10-31; research "Found during implementation")
-- [ ] T003 Rewrite `build.sbt` from voice's and ankka-contrib's: the four projects of `contracts/artefacts.md`, then `ThisBuild` organisation `com.thinkmorestupidless`, the Apache 2.0 licence, developers, `versionScheme`, `common` settings with `Test / fork := true`, and a root that aggregates with `publish / skip := true`. The domains depend on `ankkaCore` plus `ankkaTestkit % Test` and munit-scalacheck. The components depend on their domain plus `ankkaSdk` and `ankkaTestkit % Test`
-- [ ] T004 [P] Add `sbt-ci-release` 1.12.1 and `sbt-scalafmt` to `project/plugins.sbt`. Drop the packager plugin
-- [ ] T005 [P] Copy `.scalafmt.conf` and `.githooks/pre-commit` from `../ankka-contrib`
-- [ ] T006 [P] Update `Justfile`: add `fmt` (`sbt scalafmtAll scalafmtSbt`), and keep `test`, `check` and `hooks`
-- [ ] T007 Check that `sbt projects` lists the four projects and root, and that `sbt compile` passes on empty modules
+- [X] T001 Remove the template's stub in one change (R1): `src/`, `service.json`, `docker-compose.yml`, `.github/workflows/deploy.yml`, the Docker and `schema` settings in `build.sbt`
+- [X] T002 Create `project/Dependencies.scala` with `V.scala` 3.9.0, `V.ankka` (overridable by `-Dankka.version`), `V.munit` 1.3.6 and `V.scalacheck`, and `ankkaCore`, `ankkaSdk` and `ankkaTestkit`. Pin `V.ankka` at 0.14.2 (Trevor, 2026-10-31; research "Found during implementation")
+- [X] T003 Rewrite `build.sbt` from voice's and ankka-contrib's: the four projects of `contracts/artefacts.md`, then `ThisBuild` organisation `com.thinkmorestupidless`, the Apache 2.0 licence, developers, `versionScheme`, `common` settings with `Test / fork := true`, and a root that aggregates with `publish / skip := true`. The domains depend on `ankkaCore` plus `ankkaTestkit % Test` and munit-scalacheck. The components depend on their domain plus `ankkaSdk` and `ankkaTestkit % Test`
+- [X] T004 [P] Add `sbt-ci-release` 1.12.1 and `sbt-scalafmt` to `project/plugins.sbt`. Drop the packager plugin
+- [X] T005 [P] Copy `.scalafmt.conf` from `../ankka-contrib` and `.githooks/pre-commit` from `../satisfactory` (ankka-contrib carries no hook)
+- [X] T006 [P] Update `Justfile`: add `fmt` (`sbt scalafmtAll scalafmtSbt`), and keep `test`, `check` and `hooks`
+- [X] T007 Check that `sbt projects` lists the four projects and root, and that `sbt compile` passes on empty modules
 
 ## Phase 2: Foundational (blocks every story)
 
