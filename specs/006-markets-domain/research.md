@@ -192,6 +192,10 @@ categories and currencies).
 
 ## Found during implementation
 
+- **2026-10-31, the baseline (T001).** `sbt marketsDomain/test`: 5 passed (`MarketStubSuite`), 48
+  ignored (the 43 scenarios of `features/markets/` and the five of `domain.feature`, each naming
+  the spec or suite that lifts it). `sbt marketsComponents/test`: 9 passed, 4 ignored.
+
 ## Requests
 
 - ankka-modules `notes/casino-requests.md` item 10: who may change a market or move its close is

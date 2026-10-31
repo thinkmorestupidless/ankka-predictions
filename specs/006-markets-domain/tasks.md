@@ -14,7 +14,7 @@ Paths: `MK` = `modules/markets-domain/src/main/scala/com/thinkmorestupidless/pre
 
 ## Phase 1: Setup
 
-- [ ] T001 Run `sbt marketsDomain/test marketsComponents/test` on the branch and record the baseline in research.md "Found during implementation": `MarketStubSuite` green, every scenario of `features/markets/` reported ignored naming spec 006, the market scenario of `domain.feature` likewise
+- [X] T001 Run `sbt marketsDomain/test marketsComponents/test` on the branch and record the baseline in research.md "Found during implementation": `MarketStubSuite` green, every scenario of `features/markets/` reported ignored naming spec 006, the market scenario of `domain.feature` likewise
 
 ## Phase 2: Foundational (blocks every story)
 
