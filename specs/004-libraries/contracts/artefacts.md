@@ -31,6 +31,7 @@ object Exchange:
   def apply(exchange: Exchange, command: ExchangeCommand): Either[Refusal, Decision]
   def replay(exchange: Exchange, event: ExchangeEvent): Exchange
   given Serializer[Exchange]      = Codecs.serializer[Exchange]("exchange")
+object ExchangeEvent:                               // the companion, so implicit search finds it
   given Serializer[ExchangeEvent] = Codecs.serializer[ExchangeEvent]("exchange-event")
 ```
 
@@ -46,6 +47,7 @@ object Market:
   def apply(market: Market, command: MarketCommand): Either[Refusal, Decision]
   def replay(market: Market, event: MarketEvent): Market
   given Serializer[Market]      = Codecs.serializer[Market]("market")
+object MarketEvent:
   given Serializer[MarketEvent] = Codecs.serializer[MarketEvent]("market-event")
 ```
 

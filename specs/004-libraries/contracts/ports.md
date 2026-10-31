@@ -25,8 +25,12 @@ enum Through:
   case Direct, Split, Merge
 
 /** One side of a trade: what its order is charged from its reservation, what it is paid, and what
-  * of its reservation the trade frees (a better price than the order's). */
-final case class Leg(owner: OwnerId, order: OrderId, charge: Long, paid: Long, released: Long)
+  * of its reservation the trade frees (a better price than the order's) under the order's next
+  * release ordinal (0 when it frees nothing). `Through` and `Leg` are the exchange domain's own
+  * types, which the port reuses. */
+final case class Leg(
+    owner: OwnerId, order: OrderId, charge: Long, paid: Long, released: Long, releaseOrdinal: Int
+)
 
 /** Every call names the market, the exchange entity's id, so the consumer can find the market's
   * pool and currency; the libraries know neither. */

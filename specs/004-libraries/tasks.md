@@ -24,10 +24,10 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 
 ## Phase 2: Foundational (blocks every story)
 
-- [ ] T008 [P] Write the opaque string ids in `EX/ids.scala`: `MarketId`, `OutcomeId`, `OwnerId`, `OrderId`, `TradeId`, `SetKey`, `PositionKey`, each serialised as a string (`contracts/ports.md`, "Ids")
-- [ ] T009 [P] Write the ids in `MK/ids.scala`: `MarketId`, `OutcomeId`, `OperatorId` (R1: the two libraries share no module)
-- [ ] T010 [P] Write `Refusal(reason, names)`, `Decision(next, events)` and the `Refusals` catalogue in `EX/Refusal.scala`. The catalogue includes `outOfOrder`, `notBuilt` and `ledgerUnavailable` (R8)
-- [ ] T011 [P] Write the same three in `MK/Refusal.scala`, with the markets' own catalogue
+- [X] T008 [P] Write the opaque string ids in `EX/ids.scala`: `MarketId`, `OutcomeId`, `OwnerId`, `OrderId`, `TradeId`, `SetKey`, `PositionKey`, each serialised as a string (`contracts/ports.md`, "Ids")
+- [X] T009 [P] Write the ids in `MK/ids.scala`: `MarketId`, `OutcomeId`, `OperatorId` (R1: the two libraries share no module)
+- [X] T010 [P] Write `Refusal(reason, names)`, `Decision(next, events)` and the `Refusals` catalogue in `EX/Refusal.scala`. The catalogue includes `outOfOrder`, `notBuilt` and `ledgerUnavailable` (R8)
+- [X] T011 [P] Write the same three in `MK/Refusal.scala`, with the markets' own catalogue
 
 **Checkpoint**: both domains compile with no dependency but `ankka-core`.
 
@@ -37,22 +37,22 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 
 **Independent test**: `sbt exchangeDomain/test` passes the exchange scenarios of `features/libraries/domain.feature` with no container started, and `exchangeDomain/makePom` names `ankka-core` alone (V1).
 
-- [ ] T012 [US1] Bind the exchange scenarios of `features/libraries/domain.feature` (book rebuilt from events, refused command unchanged, time carried by the command, every money event names amount, owner and key) in `modules/exchange-domain/src/test/scala/.../exchange/ExchangeFeatures.scala` through the testkit's Gherkin runner, with no actor system (V4). Confirm the runner can mark a bound scenario pending with a reason and still count it (V4a); if it cannot, record how the pending scenarios are counted instead. See them fail
-- [ ] T013 [US1] Bind every scenario of `features/exchange/*.feature` that names no gate or ledger in the same file, as pending with the reason "spec 005", so the runner counts them and spec 005 lifts them
-- [ ] T014 [US1] Write `ExchangeCommand` in `EX/ExchangeCommand.scala`: `Open`, `Place`, `Cancel`, `Split`, `Merge`, `Suspend`, `Resume`, `Close`, `Finalise`. Each carries `at: Instant` and the fields the components need (ids, owner, outcome, side, price, quantity, duration)
-- [ ] T015 [US1] Write `ExchangeEvent` in `EX/ExchangeEvent.scala`, with spec 005 FR-019's fourteen cases by the names in `contracts/artefacts.md`:
+- [X] T012 [US1] Bind the exchange scenarios of `features/libraries/domain.feature` (book rebuilt from events, refused command unchanged, time carried by the command, every money event names amount, owner and key) in `modules/exchange-domain/src/test/scala/.../exchange/ExchangeFeatures.scala` through the testkit's Gherkin runner, with no actor system (V4). Confirm the runner can mark a bound scenario pending with a reason and still count it (V4a); if it cannot, record how the pending scenarios are counted instead. See them fail
+- [X] T013 [US1] Bind every scenario of `features/exchange/*.feature` that names no gate or ledger in the same file, as pending with the reason "spec 005", so the runner counts them and spec 005 lifts them
+- [X] T014 [US1] Write `ExchangeCommand` in `EX/ExchangeCommand.scala`: `Open`, `Place`, `Cancel`, `Split`, `Merge`, `Suspend`, `Resume`, `Close`, `Finalise`. Each carries `at: Instant` and the fields the components need (ids, owner, outcome, side, price, quantity, duration)
+- [X] T015 [US1] Write `ExchangeEvent` in `EX/ExchangeEvent.scala`, with spec 005 FR-019's fourteen cases by the names in `contracts/artefacts.md`:
   - every money-moving case names amount, owner and key (FR-018);
   - the cases that release carry the release's `ordinal`;
   - `TradeMade` carries `through: Through` (Direct, Split, Merge) and `legs: Vector[Leg]`, each leg with owner, order, charge, paid and released (R14).
   `Through` and `Leg` live in the domain package, and the port reuses them
-- [ ] T016 [US1] Write `Exchange` in `EX/Exchange.scala`:
+- [X] T016 [US1] Write `Exchange` in `EX/Exchange.scala`:
   - the value, its `empty`, and `SortedMap`/`Vector` fields;
   - `apply`, which refuses an out-of-order `at`, applies `Open` (empty to open, carrying the outcomes, the unit, the maximum order cost and the maximum position; refused naming the state on an exchange that is not empty) and otherwise refuses every command as `Refusals.notBuilt` (H1: the components' scenarios start from an open exchange);
   - `Exchange.cost(quantity, price)`, quantity times price, which the placement workflow reserves;
   - `replay` for every event case, and `lastTime`;
   - `given Serializer[Exchange]` and `given Serializer[ExchangeEvent]`. Give a fieldless case an explicit codec (V6)
-- [ ] T017 [US1] Run `sbt exchangeDomain/test` until T012's scenarios pass. Hold the replay scenario with hand-built event sequences while `apply` is a stub
-- [ ] T018 [US1] Confirm V1: `sbt exchangeDomain/makePom` lists `ankka-core` alone in compile scope. Record the result in research "Found during implementation"
+- [X] T017 [US1] Run `sbt exchangeDomain/test` until T012's bound scenario passes. *Done otherwise than first written: the replay scenario waits on spec 005, since a replay of hand-built events cannot fail; `ExchangeStubSuite` holds what is built here (research, "Found during implementation")*
+- [X] T018 [US1] Confirm V1: `sbt exchangeDomain/makePom` lists `ankka-core` alone in compile scope. Record the result in research "Found during implementation"
 
 **Checkpoint**: the exchange domain stands alone.
 
@@ -62,16 +62,16 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 
 **Independent test**: `sbt marketsDomain/test` passes the market scenario of `domain.feature`. `features/markets/*` are bound and pending on spec 006.
 
-- [ ] T019 [P] [US2] Bind the market scenario of `features/libraries/domain.feature`, and every scenario of `features/markets/lifecycle.feature` and `resolution.feature` as pending on "spec 006", in `modules/markets-domain/src/test/scala/.../markets/MarketsFeatures.scala`. See the bound scenario fail
-- [ ] T020 [P] [US2] Write `MarketCommand` in `MK/MarketCommand.scala`: `Draft`, `Change`, `Approve`, `Open`, `Suspend`, `Resume`, `Close`, `MoveClose`, `Resolve`, `Correct`, `Void`, `Finalise`. Each carries `at`, plus `operator` where someone acts
-- [ ] T021 [P] [US2] Write `MarketEvent` in `MK/MarketEvent.scala`, with spec 006 FR-014's twelve cases by the names in `contracts/artefacts.md`
-- [ ] T022 [US2] Write `Market` in `MK/Market.scala`:
+- [X] T019 [P] [US2] Bind the market scenario of `features/libraries/domain.feature`, and every scenario of `features/markets/lifecycle.feature` and `resolution.feature` as pending on "spec 006", in `modules/markets-domain/src/test/scala/.../markets/MarketsFeatures.scala`. See the bound scenario fail
+- [X] T020 [P] [US2] Write `MarketCommand` in `MK/MarketCommand.scala`: `Draft`, `Change`, `Approve`, `Open`, `Suspend`, `Resume`, `Close`, `MoveClose`, `Resolve`, `Correct`, `Void`, `Finalise`. Each carries `at`, plus `operator` where someone acts
+- [X] T021 [P] [US2] Write `MarketEvent` in `MK/MarketEvent.scala`, with spec 006 FR-014's twelve cases by the names in `contracts/artefacts.md`
+- [X] T022 [US2] Write `Market` in `MK/Market.scala`:
   - the value and its `empty`;
   - `apply`, which refuses an out-of-order `at`, applies `Draft`, `Approve` and `Open` far enough to reach an open market (the field checks are spec 006's), and otherwise refuses as `notBuilt`;
   - `replay` for every case;
   - `nextDue: Option[Instant]`;
   - serializers under `market` and `market-event`
-- [ ] T023 [US2] Run `sbt marketsDomain/test` until T019's bound scenario passes, and confirm V1 for `marketsDomain/makePom`
+- [X] T023 [US2] Run `sbt marketsDomain/test` until T019's bound scenario passes, and confirm V1 for `marketsDomain/makePom`
 
 **Checkpoint**: both domains stand alone.
 

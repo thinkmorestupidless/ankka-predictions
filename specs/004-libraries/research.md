@@ -305,6 +305,31 @@ that (`notes/casino-requests.md`, item 9).
 - **2026-10-31, the ankka pin.** `V.ankka` is 0.14.2, the family's current release (Trevor),
   not the 0.12.0 this plan was written against; ankka-modules' predictions module moves to it when
   it is built. The gate's five open items were accepted as written.
+- **2026-10-31, V1.** Holds: `exchangeDomain/makePom` and `marketsDomain/makePom` list
+  `scala3-library` and `ankka-core` in compile scope and nothing else; munit, munit-scalacheck and
+  `ankka-testkit` are test scope.
+- **2026-10-31, V4 and V4a.** `GherkinSuite` (ankka-testkit 0.14.2) is a munit suite and starts no
+  actor system. It has no pending status: a scenario named in `ranElsewhere` is reported ignored
+  with the text given, never passed, and a name that is no scenario fails the suite. The scenarios
+  waiting on specs 005 and 006 are listed there by title (each suite's `Pending.all`), reported as
+  "run by spec 005, when its rules are built". A bound scenario with no rule behind it would fail,
+  so nothing is passed that is not held.
+- **2026-10-31, V6.** Confirmed: under ankka's codec a fieldless enum case is `{"type":"Sell"}`.
+  Every status-word enum (`Side`, `OrderDuration`, `OrderState`, `ExchangeState`, `Through`,
+  `SetKind`, `MarketState`) has a string codec in its companion, as ankka's own rule says; an
+  unknown discriminator fails naming it.
+- **2026-10-31, the event serializers live in the event enums' companions**, not in `object
+  Exchange` and `object Market` as `contracts/artefacts.md` first said: implicit search for
+  `Serializer[ExchangeEvent]` looks in `ExchangeEvent`'s companion, so a consumer's entity finds it
+  with no import. The contract says so now.
+- **2026-10-31, `Leg.releaseOrdinal`.** FR-018 keys every release by its order and an ordinal, the
+  one a trade frees included, so a leg carries the ordinal its release used; the consumer may
+  settle the release under the trade (spec 022's `unused`) and ignore it.
+- **2026-10-31, US1's replay scenario waits on spec 005.** T017 said to hold it with hand-built
+  events; but "the exchange that produced them" would then be the replay itself, a test that
+  cannot fail. `ExchangeStubSuite` instead holds what spec 004 builds (open, cost, the not-built
+  refusal, every event case through the serializer), and US4's fixtures hold replay against
+  recorded values.
 - **2026-10-31, the analysis.** Its C1 rewrote R7 and R8 (the reservation in a workflow, not the
   entity); C2 reworded the spec to one value per market; H1 builds `Open` and the cost here, since
   the components' scenarios start from an open market; the rest were wording.
