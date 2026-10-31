@@ -40,7 +40,9 @@ when there is one, else after the command's time; expected resolution date no ea
 close's date in UTC; resolution criteria 1 to 2,000; authority 1 to 200. Each failure is
 `Refusals.field(<name>)` with the name as the scenarios say it: `question`, `description`,
 `category`, `outcomes`, `currency`, `close`, `expected resolution date`, `resolution criteria`,
-`authority`. The rules live in `Drafting.scala`, used by draft and by change.
+`authority`. The rules live in `Drafting.scala`, used by draft and by change. Outcomes are
+distinct by their exact text: `yes` and `Yes` are two outcomes, and normalising a name is the
+consumer's, before it drafts (found in review, 2026-10-31).
 
 **Rationale**: FR-004's bounds, which came from the reasoning graph's market layer. Code points,
 because a question in any script should be bounded by what a reader sees, not by UTF-16 units.

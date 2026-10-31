@@ -14,22 +14,29 @@
   - or open in the same change when the new open time is none or has passed (`Changed` then `Opened`; R4 declined this);
   - or have `nextDue` answer `lastTime` for an approved market with no open time.
   Then amend FR-013 and `contracts/domain-api.md` to match.
+  Resolved: a change to an approved market must keep an open time after the change's time, else refused naming the open time (Trevor's choice); scenario "an approved market's open time may not be removed", FR-005, R4, the data model and the contract amended, 7c02b4e. The independent oracle then found a second path to the same state (an open applied after the close), now refused naming the close, be39169.
 
 ## Should fix
 
 - `modules/markets-domain/src/main/scala/com/thinkmorestupidless/predictions/markets/Drafting.scala:50` — issue (non-blocking): a change to an approved market can move its open time and close both into the past, which gets around FR-006's "a close that has passed cannot be approved". `check(d, at)` compares the close only with the open time when there is one. Probed: an approved market changed to open 5 days ago and close 4 days ago is accepted. `Open(now)` is then accepted and the market is open with its close behind it. `MarketTimers` closes it on the next tick, and the exchange opens and closes with it. R3's own rationale says the close is compared with the command's time so that a market does not "open already closed"; this path does exactly that.
   Suggestion: in `Drafting.change`, for `MarketState.Approved`, refuse `Refusals.close(d.close)` when `!d.close.isAfter(at)`, the same check `approve` makes. Add the scenario "an approved market's close may not be changed to a time that has passed".
+  Resolved: by the blocking fix. The open time must stay after the change's time and the close after the open time (R3), so the close is after the change too; `DraftingSuite` covers both moved into the past, 7c02b4e. A late open past the close is refused too, be39169.
 - `modules/markets-domain/src/test/scala/com/thinkmorestupidless/predictions/markets/MarketProperties.scala:138` — issue (non-blocking): invariant 5 cannot fail independently, because `due(m)` is a line-for-line copy of `Market.nextDue`. The test computes its expectation the way the code under test does, which is how the blocking finding above passed 100,000 sequences. Suggestion: assert the property FR-013 is for instead, for example "an approved, open, suspended, resolved or void market always has a `nextDue`", or that applying the timer's command at `nextDue` is accepted (`contracts/domain-api.md`, "What the consumer relies on"). Either one would have gone red here.
+  Resolved: the oracle now works the next due time out from the journal alone, and asserts that an approved market is always due and that nothing opens past its close. With the open-time rule taken out it fails within 20,000 sequences, 2d511a0.
 - `modules/markets-domain/src/main/scala/com/thinkmorestupidless/predictions/markets/Market.scala:113` — issue (non-blocking): `market.definition.get` (here and at lines 149 and 162) and `market.nextDue.get` (line 239) are partial. They hold for every value built by `replay`, but `Market` is a public case class with defaults, so `Market(state = MarketState.Draft)`, or a snapshot from elsewhere, makes `apply` throw. The plan promises "every command total and pure". Not blocking, because no event sequence reaches it. Suggestion: match on `market.definition` / `nextDue` and answer `Refusals.state(market.state)` on `None`, as `Drafting.change` already does at line 36.
+  Resolved: `defined(market)` and `nextDue.toRight` refuse naming the state; no `.get` is left in `apply`, fff2b42.
 
 ## Nits
 
 - `Commit 54586da` — nitpick (non-blocking): `docs(005): built` marks spec 005 as built (CLAUDE.md, spec 005's status). It belongs to 005's close-out rather than this branch. Harmless if it is left on purpose; otherwise land it on `main` first so this range is 006 alone.
+  Declined: on purpose. 005 merged without its close-out, and the next spec's branch is where the repository's status lines move on, as 004's did on 005's branch.
 
 ## Questions
 
 - `modules/markets-domain/src/main/scala/com/thinkmorestupidless/predictions/markets/Market.scala:173` — question: `resolve` accepts a blank `authority` and records it in the `Resolution`. R6 deliberately does not compare it with the definition's, but constitution V ("provenance over plausible prose") and the non-blank checks on every evidence part suggest a blank authority should be refused naming the authority, as the draft refuses one. Either answer settles it: a refusal plus a scenario, or a line in R6 saying a blank authority is the consumer's to prevent.
+  Answered: yes, refused naming the authority; scenario "a resolution naming no authority is refused", FR-009 and R6, aef76c0.
 - `modules/markets-domain/src/main/scala/com/thinkmorestupidless/predictions/markets/Drafting.scala:19` — thought: outcome names are distinct by exact string, so `"yes"` and `"Yes"` (or `"yes "`) are two outcomes. Fine if the consumer normalises; worth a line in R3 if it does not.
+  Answered: the consumer normalises; R3 now says so, in the review commit.
 
 ## Praise
 
