@@ -172,3 +172,133 @@ market's scenario, as intended). That includes `ExchangeFeatures` 65/65, `Exchan
 confirmed the overflow and the perf suite's pool path. Not run: `exchangeComponents/test` (needs
 Docker) and `just check` (needs `uv`). For these the review relies on the commit `7cbc7d4`
 message's report (77 + 16 + 9 + 5 passed, 0 findings).
+
+## Second round
+
+# Review: spec 005, the first round's fixes (7cbc7d4...HEAD, 5 commits)
+
+**Verdict:** Approve with comments. The blocking overflow is fixed and the fix is correct. One
+should-fix remains, optional (if-minor): one of the new tests does not exercise the wrap its name
+claims. One question, which needs no change to merge.
+**What it does:** It answers the first round. The place's and the split's limit checks now divide
+and subtract instead of multiplying and adding, and `LimitsSuite` and the property suite's large
+quantities hold that. The perf suite times a direct match and a pool match separately. The refusal
+steps check the named field. The placement check fails with what it received. `resting` is package
+private. The docs now give the cancel's order, `Open`'s trust in its caller and the spec's status.
+**Should it exist:** Yes. Each hunk answers one first-round finding, and nothing outside them
+changed.
+**Read:** In full: the whole diff, including the first round's `review.md`. Opened outside the diff:
+the rest of `Exchange.scala` (`open`, `cancel`, `release`, `split`, `merge`, `cost`),
+`ExchangeCommand.Open`'s field order, `Refusal.scala` (the `names` keys the new step reads),
+`Matching.scala`'s money products, `ExchangeProperties`' worlds and its `forAllNoShrink`,
+`docs/limitations.md` "Deliberately not", and `specs/006-markets-domain/spec.md`'s outcome rule.
+**Size:** 12 files, +320 −36. Of that, 174 lines are the first round's report, about 160 are Scala
+(7 of them production) and the rest are doc lines.
+
+## First-round resolutions
+
+- Blocking, the overflowing limits: **holds.** For a price ≥ 1 (checked just before) and a
+  non-negative limit, `q > maxOrderCost / p` is exactly `q × p > maxOrderCost` over the integers.
+  `cost` is now computed only after that check, so it cannot wrap. Both subtractions are bounded
+  because a position's `quantity + restingToBuy` never exceeds `maxPosition`. Mutation runs on an
+  archive copy:
+  - Reverting the place's two checks turns `ExchangeProperties` red at sequence 271 (a negative
+    `OrderPlaced.cost`).
+  - Reverting the split's check turns `LimitsSuite` and `ExchangeProperties` red.
+  - Reverting the cost check alone turns `LimitsSuite` red.
+  - Reverting the place's position check alone leaves every suite green. See Should fix.
+- Should fix, the perf suite's direct path: **holds.** A buy of yes at 95 and a resting no buy of
+  at most 4 never make a unit, so the timed buy meets the sell at 90 directly. A buy of no at 45
+  against yes at 60 goes through the pool. Each timed place asserts its `Through`. On this run the
+  medians were 0.026 / 0.163 / 0.121 ms.
+- Should fix, `docs/limitations.md`: **the decline holds.** Market maker, short selling and
+  fractional shares are at lines 41–44, under "Deliberately not".
+- Should fix, R11 against the assertions: **holds.** Order sequences are checked in turn, and
+  `OrderPlaced.cost` joins `amounts`. R11 now says owners and keys are not asserted and that
+  failures are not shrunk, which matches `Prop.forAllNoShrink`.
+- Nit, `resting` public: **holds** (`private[exchange]`).
+- Nit, the naming steps: **holds.** `naming` checks the reason and that `names` carries the field
+  (`held` for "quantity held"), and those keys match `Refusals`.
+- Nit, `isInstanceOf`: **holds.**
+- Nit, the spec's status: **holds** (Building).
+- Question, the cancel's order: **the answer holds.** data-model.md and T010 now read id → owner →
+  state, as `cancel` does.
+- Question, `Open`'s arguments: **the answer holds.** The contract says `Open` checks nothing and
+  names who does. Spec 006 lines 49 and 225 do say two to twenty outcomes with distinct names. See
+  the question below for the one consequence the paragraph leaves unstated.
+- Thought, "the exchange is unchanged": **the answer holds.**
+
+## Should fix
+
+- `modules/exchange-domain/src/test/scala/com/thinkmorestupidless/predictions/exchange/LimitsSuite.scala:39-58`
+  issue (non-blocking, if-minor): the test "a buy whose position would wrap" does not hold a
+  wrapping position. Its first assertion is a cost wrap. Its second, `buy(Long.MaxValue - 5, 1)` by
+  an owner with nothing in `m-2`, sums to `Long.MaxValue - 5` under the old check too, so it does
+  not wrap. As a result, nothing guards the place's position subtraction (`Exchange.scala:144`).
+  With only that line reverted to `held.quantity + held.restingToBuy + c.quantity > x.maxPosition`,
+  `LimitsSuite`, `ExchangeProperties` and the rest pass. The property suite cannot reach that wrap:
+  its `maxOrderCost` is at most 100,000, so a buy that passes the cost check is small. A probe
+  confirmed the gap: with the line reverted, an owner holding 6 sets in an exchange opened with
+  `maxOrderCost = Long.MaxValue` gets `OrderPlaced(..., quantity = 9223372036854775802, cost =
+  9223372036854775802, ...)` accepted, past `maxPosition` 10,000. At HEAD the same probe is refused
+  `maximum position`. Suggestion: in that test, split a few sets for `ada` in `m-2` before the
+  second buy, so the old sum wraps:
+  ```scala
+  val x = List(unbounded, ExchangeCommand.Split(SetKey("k-2"), ada, 6, t))
+    .foldLeft(Exchange.empty)((x, c) => Exchange(x, c).fold(r => fail(r.toString), _.next))
+  ```
+  Or move the second assertion into its own test with that name, and rename the first one after
+  the cost.
+  Resolved: the owner holds 6 before the buy of `Long.MaxValue - 5` at 1, so the old sum wraps; red with the old check, green with the new, bdc97b8
+
+## Questions
+
+- `specs/005-exchange-domain/contracts/domain-api.md:39-43` question: the limit checks are now
+  safe for any limits. The money products the limits do not bound still are not:
+  - `split`'s `c.sets * x.unit` (`Exchange.scala:208`)
+  - `merge`'s paid
+  - a sell leg's `quantity * price` (`Matching.scala:106`)
+
+  Each is bounded only by `maxPosition × unit`, so an `Open` with, for example, `maxPosition =
+  Long.MaxValue` lets a split of `Long.MaxValue / 50` sets charge a wrapped amount. The consumer's
+  real values (10,000 × 100) are far from this. The contract already makes the limits the caller's.
+  Should it also state the precondition (`maxPosition × unit` and `maxOrderCost` fit in a `Long`),
+  so a caller who opens an exchange some other way knows the second check it owns? One sentence
+  would resolve this; no code change is asked.
+  Answered: yes; the contract now says the caller keeps `maxPosition × unit` within a `Long`, beside what `Open` does not check, bdc97b8
+
+## Praise
+
+- `Exchange.scala:138-139` praise: the comment says why the checks divide and subtract, so the next
+  reader will not "simplify" them back into the overflowing form.
+- `ExchangePerfSuite.scala:80,91` praise: asserting which way each timed place traded turns the
+  first round's silent mis-measurement into a failure if the fixture ever drifts again.
+- `ExchangeProperties.scala:40` praise: the `huge` generator draws exactly the three boundary
+  shapes (the maximum, just over half, just over a ninety-ninth), and it found the split and place
+  wraps under mutation on its own.
+
+## Checks applied
+
+General checklist groups applied: Correctness, Error handling (refusals at the domain's edge),
+Tests, API and compatibility (`resting` narrowed; it is not in the contract, so this breaks no
+published API), Documentation, Commit and PR hygiene. Skipped: Design and scope (each hunk answers a
+named finding), Concurrency (a pure value), Security (no entry point, credential or CI change), Data
+and migrations (no stored type changed), Performance (besides the perf suite itself), Observability,
+and Dependencies (`build.sbt` unchanged).
+
+Language skill: `pr-review-scala` (the bundled one; the repository has none of its own). Applied:
+types and totality (the `PlacementSuite` match replaces an `isInstanceOf`), error handling, and
+tests (could each new test pass while its claim is false? That question produced the should-fix).
+Skipped: actors and Futures, serialization, and build (none in the diff).
+
+Project rules read: `CLAUDE.md` (money in minor units as `Long`) and the parent `CLAUDE.md`.
+`specs/005-exchange-domain/review.md` is this report, not a review checklist; the repository has no
+`REVIEW.md`. Enforced by tooling and not reviewed: scalafmt and `-Wunused:all -Werror`.
+
+Tests run on a `git archive HEAD` copy in the reviewer's scratchpad (the checkout was not touched):
+- `sbt exchangeDomain/test` passed 80 with 1 ignored (the first round's 77 plus `LimitsSuite`'s 3),
+  with `ExchangeProperties` at 100,000 sequences.
+- Five mutation and probe runs on a second copy, described above.
+
+Not run: `exchangeComponents/test`, the only suite where `PlacementSuite` changed, because it needs
+Docker. Its change is a three-line assertion rewrite.
