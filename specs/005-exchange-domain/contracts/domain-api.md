@@ -40,7 +40,8 @@ positive whole number" is one rule, refused `quantity`.
 market's, which spec 006's markets domain refuses unless there are two to twenty with distinct
 names; its unit and limits are the consumer's values. A caller that opens an exchange some other
 way owns those checks: two equal outcomes would match a buy against its own book's buys through
-the pool.
+the pool. The caller also keeps `maxPosition × unit` within a `Long`: a split's charge, a merge's
+payout and a sell's proceeds are bounded by that product and no more.
 
 ## Refusals
 

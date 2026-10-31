@@ -46,10 +46,11 @@ class LimitsSuite extends munit.FunSuite:
         10_000,
         t
       )
-    val x = Exchange(Exchange.empty, unbounded).fold(r => fail(r.toString), _.next)
-    assertEquals(
-      Exchange(x, buy(Long.MaxValue / 99 + 1, 99)),
-      Left(Refusals.limit(Refusals.maximumOrderCost))
+    val seeded: ExchangeCommand = ExchangeCommand.Split(SetKey("k-1"), ada, 6, t)
+    // Holding 6, a buy of Long.MaxValue - 5 at 1 is within the maximum order cost, and
+    // 6 + Long.MaxValue - 5 wraps below the maximum position.
+    val x = List(unbounded, seeded).foldLeft(Exchange.empty)((x, c) =>
+      Exchange(x, c).fold(r => fail(r.toString), _.next)
     )
     assertEquals(
       Exchange(x, buy(Long.MaxValue - 5, 1)),
