@@ -183,6 +183,7 @@ object Market:
       _ <- in(market, MarketState.Closed)
       _ <- outcome(market, c.outcome)
       _ <- evidence(c.evidence)
+      _ <- Either.cond(!Drafting.blank(c.authority), (), Refusals.field("authority"))
       _ <- window(c.window)
       d <- decide(
         market,

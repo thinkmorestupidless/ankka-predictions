@@ -28,6 +28,11 @@ Feature: Closing and resolving a market
     When "olga" resolves the market "m-4" to "yes" on no evidence
     Then the resolution is refused naming the evidence
 
+  Scenario: a resolution naming no authority is refused
+    Given a closed market "m-20" with the outcomes "yes" and "no"
+    When "olga" resolves the market "m-20" to "yes" on the evidence "premierleague.com" at "https://premierleague.com/tables" saying "Newcastle finished fourth" by no authority
+    Then the resolution is refused naming the authority
+
   Scenario: a resolution naming an outcome the market does not have is refused
     Given a closed market "m-5" with the outcomes "yes" and "no"
     When "olga" resolves the market "m-5" to "maybe" on the evidence "premierleague.com" at "https://premierleague.com/tables" saying "Newcastle finished fourth"

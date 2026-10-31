@@ -84,7 +84,9 @@ so a timer firing exactly on time succeeds.
 ## R6. Evidence and the authority
 
 **Decision**: a resolve, correct or void with no evidence, or with a piece whose source, locator
-or excerpt is blank, is refused naming the evidence. A resolve records the authority it carries;
+or excerpt is blank, is refused naming the evidence. A resolve with a blank authority is refused naming
+the authority (found in review, 2026-10-31: a blank one is no provenance). A resolve records the
+authority it carries;
 the domain does not compare it with the definition's: which authority may resolve is the
 consumer's, as who may resolve is.
 

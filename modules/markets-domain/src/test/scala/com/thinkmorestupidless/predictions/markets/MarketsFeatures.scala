@@ -217,7 +217,13 @@ class MarketsFeatures extends GherkinSuite("features/markets"):
 
   private var offered: Vector[Evidence] = Vector.empty
 
-  private def resolve(by: String, id: String, outcome: String, evidence: Vector[Evidence]) =
+  private def resolve(
+      by: String,
+      id: String,
+      outcome: String,
+      evidence: Vector[Evidence],
+      authority: Option[String] = None
+  ) =
     offered = evidence
     world.apply(
       id,
@@ -225,7 +231,7 @@ class MarketsFeatures extends GherkinSuite("features/markets"):
         op(by),
         OutcomeId(outcome),
         evidence,
-        definition(id).authority,
+        authority.getOrElse(definition(id).authority),
         world.window,
         world.now
       )
@@ -235,6 +241,17 @@ class MarketsFeatures extends GherkinSuite("features/markets"):
     "{string} resolves the market {string} to {string} on the evidence {string} at {string} saying {string}"
   ) { (by: String, id: String, outcome: String, source: String, locator: String, excerpt: String) =>
     resolve(by, id, outcome, ev(source, locator, excerpt))
+  }
+  When(
+    "{string} resolves the market {string} to {string} on the evidence \"premierleague.com\" at \"https:\\/\\/premierleague.com\\/tables\" saying {string} by no authority"
+  ) { (by: String, id: String, outcome: String, excerpt: String) =>
+    resolve(
+      by,
+      id,
+      outcome,
+      ev("premierleague.com", "https://premierleague.com/tables", excerpt),
+      Some(" ")
+    )
   }
   When("{string} resolves the market {string} to {string} on no evidence") {
     (by: String, id: String, outcome: String) => resolve(by, id, outcome, Vector.empty)

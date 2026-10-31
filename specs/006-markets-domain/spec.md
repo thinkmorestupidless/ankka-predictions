@@ -90,6 +90,7 @@ market; approve a draft whose close has passed; every refusal names its field.
 - added `features/markets/lifecycle.feature`: an approved market's resolution criteria may be changed before it opens
 - added `features/markets/lifecycle.feature`: an approved market's open time may not be removed
 - added `features/markets/lifecycle.feature`: an approved market is not opened after its close
+- added `features/markets/resolution.feature`: a resolution naming no authority is refused
 - added `features/markets/lifecycle.feature`: an open market's resolution criteria may not be changed
 - added `features/markets/lifecycle.feature`: a draft whose close has passed may not be approved
 
@@ -281,7 +282,8 @@ purity.
 **Resolution, correction, void, finality**
 
 - **FR-009**: A resolve MUST be refused naming the state unless the market is closed, naming the
-  outcome when it is not the market's, and naming the evidence when none is given; otherwise it
+  outcome when it is not the market's, naming the evidence when none is given, and naming the
+  authority when it is blank; otherwise it
   MUST record the outcome, at least one piece of evidence (a source, a locator and an excerpt),
   the authority, the operator, the time and the end of the review window, which the command
   carries as a length.
