@@ -200,6 +200,13 @@ categories and currencies).
 - **2026-10-31, a description-only change.** `Drafting.change` checks a change that touches only
   the description against the description's bound alone: an open market whose close has passed is
   still allowed its description.
+- **2026-10-31, one commit for the bindings.** T005, T006, T010, T012 and T016 all write
+  `MarketsFeatures.scala`; they were written together, before any body: every step of
+  `features/markets/` has a definition, and against the stub 36 scenarios fail and 7 pass (the
+  draft kept, the approvals that open, the open on time, the record, the next due).
+- **2026-10-31, the full draft step.** With `"yes" and "no" in "GBP"` as literal text it still had
+  seven values, so the category `"sport"` is literal too. In the correction with a time, the
+  locator's slashes are escaped (`\/`), since `/` is alternation in a cucumber expression.
 
 ## Requests
 
