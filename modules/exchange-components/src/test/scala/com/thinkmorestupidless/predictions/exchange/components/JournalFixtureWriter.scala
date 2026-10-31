@@ -22,7 +22,7 @@ object JournalFixtureWriter:
       s"$dir exists: a release's fixtures are never rewritten"
     )
 
-    // Every case, in the order the samples give them; most are ones the stub domain does not produce.
+    // Every case, in the order the samples give them, replayed whatever a domain would decide.
     val every = Samples.everyEvent(t)
     Journal.write(
       dir.resolve("every-event.jsonl"),
@@ -30,7 +30,7 @@ object JournalFixtureWriter:
       every.foldLeft(Exchange.empty)(Exchange.replay)
     )
 
-    // A scenario this build's domain runs: an exchange opened.
+    // An exchange opened, the scenario every consumer starts from.
     val opened = Exchange(
       Exchange.empty,
       ExchangeCommand.Open(
@@ -43,3 +43,34 @@ object JournalFixtureWriter:
       )
     ).fold(r => sys.error(s"the exchange did not open: $r"), identity)
     Journal.write(dir.resolve("opened.jsonl"), opened.events, opened.next)
+
+    // A market traded to its end: a split, a sell, a buy at a better price, a trade through the
+    // pool, a cancel, a close and a finality, so a journal with money on it is replayed.
+    val yes = OutcomeId("yes")
+    val no  = OutcomeId("no")
+    def place(id: String, owner: String, outcome: OutcomeId, side: Side, price: Long, at: Int) =
+      ExchangeCommand.Place(
+        OrderId(id),
+        OwnerId(owner),
+        outcome,
+        side,
+        price,
+        10,
+        OrderDuration.RestUntilClose,
+        t.plusSeconds(at.toLong)
+      )
+    val traded = Vector(
+      ExchangeCommand.Split(SetKey("k-1"), OwnerId("ada"), 20, t.plusSeconds(1)),
+      place("s-1", "ada", yes, Side.Sell, 55, 2),
+      place("b-1", "bob", yes, Side.Buy, 60, 3),
+      place("b-2", "cy", no, Side.Buy, 45, 4),
+      place("b-3", "bob", yes, Side.Buy, 58, 5),
+      place("b-4", "cy", no, Side.Buy, 30, 6),
+      ExchangeCommand.Cancel(OrderId("b-4"), OwnerId("cy"), t.plusSeconds(7)),
+      ExchangeCommand.Close(t.plusSeconds(8)),
+      ExchangeCommand.Finalise(Finality.Resolved(yes), t.plusSeconds(9))
+    ).foldLeft(opened) { (d, c) =>
+      Exchange(d.next, c)
+        .fold(r => sys.error(s"$c: $r"), n => Decision(n.next, d.events ++ n.events))
+    }
+    Journal.write(dir.resolve("traded.jsonl"), traded.events, traded.next)

@@ -34,7 +34,7 @@ class JournalCompatibilitySuite extends GherkinSuite("features/libraries/compati
   }
 
   Given("a journal with an event the release {string} no longer produces") { (_: String) =>
-    // Every case is in it, and this build's domain produces few of them until specs 005 and 006.
+    // Every case is in it, replayed whether or not a command would produce it now.
     journals = fixtures("every-event.jsonl")
     assert(journals.nonEmpty, "no every-event fixture")
   }
