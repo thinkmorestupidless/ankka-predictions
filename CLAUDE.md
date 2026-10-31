@@ -44,8 +44,8 @@ from the parent directory's `CLAUDE.md`; this file adds what is specific to this
 | 001 | superseded | projects and the ledger: eitheror's now, ankka-modules specs 021 and 022 |
 | 002 | superseded | the `markets` service: the lifecycle restated in 006; the catalogue, facts and mirror are eitheror's (ankka-modules 023) |
 | 003 | superseded | the `exchange` service: the book restated in 005; the gates, reservation, facts and stream are eitheror's (ankka-modules 022, 023) |
-| 004 | building | the libraries: the split, the ports, the journal as a contract, publishing by tag |
-| 005 | draft | the exchange domain: the value of one market's trading, its commands, events and rules |
+| 004 | built | the libraries: the split, the ports, the journal as a contract, publishing by tag |
+| 005 | building | the exchange domain: the value of one market's trading, its commands, events and rules |
 | 006 | draft | the markets domain: the value of one market from draft to final, its commands and events |
 
 The checker reads specs from 004 (`specs-from` in `.specify/extensions/bdd/bdd-config.yml`);
