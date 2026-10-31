@@ -34,7 +34,7 @@ the domain's; this feature adds no path that would slow it
 **Constraints**: the domains read no clock, wallet, player, database or network (FR-003); the
 events, wire names, manifests and component ids are a published protocol from the first tag
 (FR-009)
-**Scale/Scope**: four modules, three port traits, seven components, two fixture suites, two
+**Scale/Scope**: four modules, three port traits, eight components (one a workflow), two fixture suites, two
 workflows
 
 ## Constitution Check
@@ -97,6 +97,7 @@ modules/
 │   ├── ExchangeComponents.scala       # the class: entity, positions view, settlement consumer, timers, descriptors
 │   ├── ExchangeEntity.scala
 │   ├── PositionRows.scala
+│   ├── Placement.scala                # the workflow: gate, reserve, apply, release (R7, R8)
 │   ├── Settlement.scala
 │   └── ExchangeTimers.scala
 ├── exchange-components/src/test/scala/.../exchange/components/
@@ -120,9 +121,9 @@ stays at `src/`.
 |---|---|
 | the modules, the build, CI, the release job, the formatter and hook | nothing |
 | `Refusal`, `Refusals`, `Decision`, the ids, the serializers, the enums' case names and every field the components need (ids, owner, outcome, side, price, quantity, duration, time, the money fields of FR-018) | the remaining fields and every rule inside `Exchange.apply` and `Market.apply`; the property suites |
-| `Exchange.apply` and `Market.apply` as stubs that refuse everything as "not built" with a named reason, and `replay` for every event case | the real bodies, in the same signatures |
+| `Exchange.apply` for `Open` (empty to open, carrying the outcomes, the unit and the limits) and `Exchange.cost`, since the components' scenarios start from an open exchange; every other command a stub that refuses as "not built" with a named reason; `replay` for every event case; `Market.apply` likewise for `Draft`, `Approve` and `Open` | the real bodies, in the same signatures |
 | the step definitions for `features/libraries/domain.feature`, `components.feature`, `compatibility.feature` | the step definitions for `features/exchange/*` and `features/markets/*` |
-| the three ports, the seven components, the scripted ports, the fixture suites, the `0.0.0` fixtures | nothing; when the domains land, the fixtures are regenerated once before the first tag |
+| the three ports, the eight components (the placement workflow among them), the scripted ports, the fixture suites, the `0.0.0` fixtures | nothing; when the domains land, the fixtures are regenerated once before the first tag |
 
 The enum case names and the manifests are fixed here because they are the protocol; a worker on
 005 or 006 adds fields and rules and never renames a case. Each worker's own plan says what it

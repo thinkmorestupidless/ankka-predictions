@@ -70,6 +70,7 @@ never renamed or removed; a field is only added, with a default (spec 004 FR-009
 | Component | Id | Kind | Wire names |
 |---|---|---|---|
 | the exchange | `exchange` | event sourced entity, one per market | commands `open`, `place`, `cancel`, `split`, `merge`, `suspend`, `resume`, `close`, `finalise`; queries `get`, `prices`, `depth`, `position` |
+| placement | `exchange-placement` | workflow, one per order, id `<market>/<order>` | command `place` (the start, the claim); query `outcome`; steps `gate`, `reserve`, `apply`, `release`, `unavailable` |
 | positions | `exchange-positions` | view of the exchange's changes | query `by-owner` |
 | settlement | `exchange-settlement` | consumer of the exchange's events, calls the ledger | none |
 | exchange timers | `exchange-timers` | timed action | `close` |

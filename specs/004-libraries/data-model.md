@@ -15,7 +15,7 @@ live. Signatures are in `contracts/`.
 | `ExchangeEvent` | enum | spec 005 FR-019's fourteen; every money-moving case names amount, owner and key (FR-018) |
 | `Refusal`, `Refusals` | value, catalogue | reason and the names (field, limit, state, owner, id); `Refusals.outOfOrder`, `.price`, ... |
 | `Decision` | value | `(next, events)` |
-| `Exchange.apply`, `Exchange.replay` | functions | the whole rule set |
+| `Exchange.apply`, `Exchange.replay` | functions | the whole rule set; `Open` and `Exchange.cost(quantity, price)` are built by spec 004 (its components start from an open exchange), the rest by spec 005 |
 | ids | opaque strings | `MarketId`, `OutcomeId`, `OwnerId`, `OrderId`, `TradeId`, `SetKey`, `PositionKey` |
 | serializers | givens | manifests `exchange`, `exchange-event` |
 
@@ -43,7 +43,8 @@ State machine: `empty → draft → approved → open ↔ suspended → closed �
 |---|---|---|
 | `LedgerPort`, `GatePort`, `ExchangePorts` | traits, value | `contracts/ports.md` |
 | `ExchangeComponents(ports)` | class | holds the companions below; `descriptors` |
-| `ExchangeEntity` | event sourced entity, state `Exchange`, events `ExchangeEvent` | id `exchange`; `place` asks the gate then reserves then applies; every other command applies the domain |
+| `ExchangeEntity` | event sourced entity, state `Exchange`, events `ExchangeEvent` | id `exchange`; every command applies the domain and persists its events; it calls no port (R7) |
+| `Placement` | workflow, one per order | id `exchange-placement`; `place` starts it as the claim; steps `gate`, `reserve`, `apply`, `release`; the outcome in its state, answered by `outcome`; `reserve` recovers within `ledgerPatience` (R8) |
 | `PositionRows` | view, source the entity's changes, one row per owner and outcome | id `exchange-positions` |
 | `Settlement` | consumer of the entity's events | id `exchange-settlement`; release, settle, charge, pay, payout, keyed, at least once |
 | `ExchangeTimers` | timed action | id `exchange-timers`; `close` applies `Close` at the time the consumer scheduled |

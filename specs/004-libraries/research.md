@@ -133,46 +133,58 @@ virtual thread, so a blocking port call costs nothing (ankka's `CLAUDE.md`, virt
 
 **Rests on.** ankka's own `ComponentClient.invoke` is blocking for the same reason.
 
-## R7. The ledger's reservation is the one port call in the request path; everything else is driven from events
+## R7. The reservation is made by a placement workflow keyed by the order; the entity never calls a port
 
-**Decision.** `place` in the exchange entity: ask the gate port; if allowed and the order is a
-buy, ask the ledger port to reserve the cost keyed by the order id; only then apply the domain
-command and persist its events. Release, settle and pay are driven by the `settlement` consumer
-from the persisted events (`OrderCancelled`, `OrderExpired`, `TradeMade`, `SetsSplit`, `SetsMerged`,
-`PositionPaid`), each keyed as spec 005 FR-018 says, at least once. A gate or ledger refusal
-reaches the caller as the domain's `Refusal` shape with the port's reason (FR-007, FR-012).
+**Decision.** *Rewritten 2026-10-31 after the analysis (finding C1): the first version reserved
+inside the entity's `place` handler, which made the book wait on the ledger, against constitution
+II.* `exchange-components` holds an `exchange-placement` workflow, one instance per order, id
+`<market>/<order>`, in the pattern ankka-modules' wallet uses for every keyed command: `start` is
+the atomic claim, the outcome lives in the workflow's state, and a repeat under the same id is
+answered with the outcome the first received (the consumer's endpoint polls `outcome`). Its steps:
 
-A reserve that was made and whose persist then failed (the entity crashed between the two) is
-released by the consumer of events? No event exists. Instead the components release it on the
-next `place` or `cancel` for that order id: a `place` repeated under the same id after a crash
-reserves again under the same key, which the ledger answers as the first was (FR-008). A
-reservation under an order id the exchange never accepted is the ledger's to expire; the plan
-records this as the one money edge the library cannot close alone, and `notes/casino-requests.md`
-gains the request.
+1. `gate`: ask the gate port; refused, record the refusal and end.
+2. `reserve` (a buy only): ask the ledger to reserve the cost (quantity times price, a function
+   of the domain) keyed by the order id; `Insufficient` or `Refused`, record and end.
+3. `apply`: call the exchange entity's `place`, which applies the domain and persists its events
+   and nothing else; a domain refusal of a buy transitions to `release`, else record and end.
+4. `release`: give the reservation back under the order id and ordinal 0, which no event of the
+   exchange uses, since the exchange produced none; record the refusal and end.
 
-**Rests on.** Spec 005's "money is handled by saying, never by doing" and FR-018; spec 004 FR-007
-and FR-008.
+Every step may run twice: the ledger answers a repeat as the first was (spec 004 FR-008), and the
+entity answers a repeated `place` as it answered the first (spec 005). A crash between `reserve`
+and `apply` resumes at `apply`; one between `apply` and the end resumes with the entity's answer.
+So a reservation the exchange never accepted is released by this workflow and is no longer asked
+of ankka-modules. Release, settle, charge, pay and payout are driven by the `settlement` consumer
+from the persisted events, each keyed as spec 005 FR-018 says, at least once. A sell goes
+through `gate` and `apply` alone.
 
-**Considered.** Reserving by a consumer after the fact, with the book accepting first: breaks
-"the buyer's reservation guaranteeing solvency before the order reached the book"
-(`docs/architecture.md`, runtime shape).
+**Rests on.** Constitution II ("money is reserved before an order reaches the book ... the book
+never waits on the ledger"); ankka's workflow rules (a command decides and transitions, a step
+does the work, every step idempotent, recovery declared in settings); ankka-modules
+`services/wallet` (`SettlementWorkflow`, `AccountMoveWorkflow`) as the precedent for start as the
+claim.
 
-## R8. A ledger that fails rather than refuses: the components retry within a patience the consumer sets, then refuse
+**Considered.** Reserving inside the entity (the first version): one call per order, but the
+market's entity is serialised per id, so every buy held every other command on that market for
+the wallet's round trip, and the wallet's latency landed in spec 004 SC-002's 10 ms entity
+budget. Reserving by a consumer after the fact: breaks "reserved before an order reaches the
+book".
 
-**Decision.** `ExchangePorts` carries `ledgerPatience: java.time.Duration`. A `reserve` that throws
-is retried with a short backoff until the patience is spent, inside the handler, then the order is
-refused with the reason `ledger unavailable` and no event. No pending state is persisted; the
-caller retries. The library has no default: the consumer passes one, as it passes the review
-window to the markets domain. This answers spec 004's open clarification and is confirmed at the
-gate.
+## R8. A ledger that fails rather than refuses: the `reserve` step is retried within a patience the consumer sets, then the order is refused
 
-**Rests on.** Spec 006's rule that the domain has no defaults the consumer should own. The cost:
-while a reserve is retried, that market's other commands wait, because an entity is serialised
-per id; patience should be seconds, not minutes.
+**Decision.** `ExchangePorts` carries `ledgerPatience: java.time.Duration`. The placement
+workflow declares the `reserve` step's recovery from it: a throw is retried with the runtime's
+backoff until the patience is spent, then the step fails over to a step that records the refusal
+`ledger unavailable` and ends; no event is produced and the caller sees the refusal in the
+outcome. The library has no default: the consumer passes one, as it passes the review window to
+the markets domain. This answers spec 004's open clarification and was confirmed at the gate.
 
-**Considered.** Persisting a pending order and completing it later from a timer: a second state
-machine inside the entity for a case the consumer can retry in the request path, and a pending
-order visible in the book that the domain (spec 005) has no state for.
+**Rests on.** Spec 006's rule that the domain has no defaults the consumer should own; ankka's
+rule that recovery is declared in settings because the runtime enforces it. Since R7 moved the
+call out of the entity, the retry holds up this order alone and not the market.
+
+**Considered.** Persisting a pending order in the exchange and completing it later: a state the
+domain (spec 005) has no rule for, and visible in the book.
 
 ## R9. Timers: one `TimedAction` per library, applying the market's next-due change
 
@@ -279,6 +291,8 @@ that (`notes/casino-requests.md`, item 9).
   `ci-release`, or the check moves into a test the job runs.
 - **V4.** The Gherkin runner in `ankka-testkit` 0.14.2 runs a feature directory with step
   definitions and no actor system started (voice's domain suites are the precedent to read).
+- **V4a.** The Gherkin runner can mark a bound scenario pending with a reason and count it, so
+  the scenarios specs 005 and 006 lift are bound here and counted, not skipped (tasks T012, T013).
 - **V5.** A `TimedAction` hosted by the consumer can be scheduled from an entity in a library
   module through `EventSourcedEntityContext` (or the components expose the scheduling as a
   function the consumer calls).
@@ -291,11 +305,14 @@ that (`notes/casino-requests.md`, item 9).
 - **2026-10-31, the ankka pin.** `V.ankka` is 0.14.2, the family's current release (Trevor),
   not the 0.12.0 this plan was written against; ankka-modules' predictions module moves to it when
   it is built. The gate's five open items were accepted as written.
+- **2026-10-31, the analysis.** Its C1 rewrote R7 and R8 (the reservation in a workflow, not the
+  entity); C2 reworded the spec to one value per market; H1 builds `Open` and the cost here, since
+  the components' scenarios start from an open market; the rest were wording.
 
 ## Requests
 
-- To ankka-modules (`notes/casino-requests.md`, new entry): a reservation keyed by an order id
-  the exchange never accepted is the ledger's to expire (R7).
+- To ankka-modules: none for an orphaned reservation; the placement workflow releases it (R7,
+  rewritten 2026-10-31).
 - To ankka-modules (`notes/casino-requests.md`, item 9): a split charged from a reservation, for a
   trade matched through the pool (R14).
 - To ankka: none from this feature.

@@ -88,12 +88,13 @@ final case class MarketPorts(resolution: ResolutionPort)
 
 | Rule | Spec | Held by |
 |---|---|---|
-| A gate refusal reserves nothing and carries the gate's reason | 004 FR-007 | `place` asks the gate before the ledger |
-| A ledger refusal (`Insufficient`, `Refused`) leaves the book unchanged and no event | 004 FR-007 | `place` applies the domain only after `Done` |
+| A gate refusal reserves nothing and carries the gate's reason | 004 FR-007 | the placement workflow's `gate` step runs before `reserve` |
+| A ledger refusal (`Insufficient`, `Refused`) leaves the book unchanged and no event | 004 FR-007 | the workflow reaches the entity only after `Done`; the entity calls no port (R7) |
+| A reservation the exchange refuses is released under the order and ordinal 0 | R7 | the workflow's `release` step |
 | Every ledger call is keyed; a repeat is answered as the first was | 004 FR-008 | the keys are the domain's ids; the settlement consumer is at least once |
 | A release is keyed by its order and its ordinal for that order, so an order's second release is not a repeat of its first | 005 FR-005, FR-008, FR-018; R14 | `ExchangeEvent`'s release-carrying cases name the ordinal |
 | A trade names how it was made and every leg's charge, payment and release | 005 FR-011, FR-019; R14 | `settlement` passes the `TradeMade` event's legs |
-| A ledger that throws is retried within `ledgerPatience`, then the order is refused as `ledger unavailable` | 004 edge case, R8 | `place` |
+| A ledger that throws is retried within `ledgerPatience`, then the order is refused as `ledger unavailable` | 004 edge case, R8 | the `reserve` step's declared recovery |
 | A resolution-port refusal changes nothing | 004 FR-007 | `resolve`, `void`, `approve`, `close`, `suspend`, `resume` ask first |
 | The components register nothing | 004 FR-006 | no `registerAll` in a library; `descriptors` is a value the consumer passes |
 
