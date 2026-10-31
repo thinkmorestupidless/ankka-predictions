@@ -1,0 +1,16 @@
+exchange-event	{"type":"Opened","market":"m-1","outcomes":["yes","no"],"unit":100,"maxOrderCost":100000,"maxPosition":10000,"at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"OrderPlaced","order":"b-1","owner":"ada","outcome":"yes","side":"buy","price":60,"quantity":10,"duration":"rest-until-close","cost":600,"sequence":1,"at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"TradeMade","trade":"t-1","sequence":1,"through":"direct","quantity":10,"prices":{"yes":55},"legs":[{"owner":"ada","order":"b-1","outcome":"yes","side":"buy","charge":550,"paid":0,"released":50,"releaseOrdinal":1},{"owner":"bob","order":"s-1","outcome":"yes","side":"sell","charge":0,"paid":550,"released":0,"releaseOrdinal":0}],"at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"OrderFilled","order":"b-1","at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"OrderCancelled","order":"b-2","owner":"ada","released":600,"releaseOrdinal":1,"at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"OrderExpired","order":"b-3","owner":"ada","released":600,"releaseOrdinal":1,"at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"SetsSplit","key":"k-1","owner":"ada","sets":10,"charge":1000,"at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"SetsMerged","key":"k-2","owner":"ada","sets":5,"paid":500,"at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"Suspended","at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"Resumed","at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"Closed","at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"PositionPaid","key":"ada/yes","owner":"ada","outcome":"yes","quantity":10,"paid":1000,"at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"RemainderKept","amount":1,"at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"Final","finality":{"type":"Resolved","outcome":"yes"},"at":"2026-10-31T10:00:00Z"}
+exchange-event	{"type":"Final","finality":{"type":"Void"},"at":"2026-10-31T10:00:00Z"}
+state	{"market":"m-1","outcomes":["yes","no"],"unit":100,"maxOrderCost":100000,"maxPosition":10000,"state":"final","books":{"no":{},"yes":{}},"orders":{"b-1":{"id":"b-1","owner":"ada","outcome":"yes","side":"buy","price":60,"quantity":10,"remaining":0,"duration":"rest-until-close","state":"filled","cost":600,"sequence":1,"releases":1}},"positions":{"ada":{"no":{"quantity":5,"cost":250},"yes":{}},"bob":{"yes":{"quantity":-10,"restingUnderSells":-10}}},"setMoves":{"k-1":{"kind":"split","owner":"ada","sets":10,"at":"2026-10-31T10:00:00Z"},"k-2":{"kind":"merge","owner":"ada","sets":5,"at":"2026-10-31T10:00:00Z"}},"remainder":1,"lastPrices":{"yes":55},"nextOrder":2,"nextTrade":2,"lastTime":"2026-10-31T10:00:00Z","finality":{"type":"Void"}}
