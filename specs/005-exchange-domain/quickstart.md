@@ -20,9 +20,9 @@ A check that can fail: in `Matching.scala` make the pool candidate lose ties to 
 *and* win at a worse price (swap the comparison), and watch "a buy takes the better price of a
 resting sell of its own outcome and a buy of the other" go red; put it back.
 
-A second: in `Exchange.scala` stop adding to `restingToBuy` on `OrderPlaced`, and watch "a buy
-order that would take the position above the maximum position is refused naming the limit" and
-the property suite's invariant 4 go red.
+A second: in `Exchange.scala` stop adding to `restingToBuy` on `OrderPlaced`, and watch the
+property suite's invariant 4 go red. ("a buy order that would take the position above the
+maximum position is refused naming the limit" stays green: it holds shares and rests no buy.)
 
 ## The components stand on the real domain
 

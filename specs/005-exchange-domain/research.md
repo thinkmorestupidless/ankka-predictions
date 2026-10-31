@@ -348,6 +348,13 @@ All four by Trevor, 2026-10-31, through the design run.
 - **2026-10-31, R13.** `traded.jsonl` (21 events): a split, a sell, a direct buy at a better
   price, a pool trade through a split, a cancel, a close and a resolved finality whose positions
   include two paid 0.
+- **2026-10-31, V7.** `-Werror` and scalafmt pass. `Book.insert` is a binary search of its
+  own over the book's ordering, not `Vector.search`, which needs an `Ordering` of the orders
+  and not the side's price-then-time rule.
+- **2026-10-31, the quickstart's second check.** Without `restingToBuy` on `OrderPlaced` only the
+  property suite goes red; the maximum position scenario holds shares and rests no buy, so it
+  cannot see it. The quickstart says so. The first check (the pool winning ties and worse
+  prices) turns two `complete-sets.feature` scenarios red, as it said.
 
 ## Requests
 

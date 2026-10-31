@@ -115,7 +115,7 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 ## Phase 10: Polish
 
 - [X] T032 [P] Update `README.md` (the exchange's rules are in; the markets' wait on spec 006), `CLAUDE.md`'s spec table (005 building; 004 built) and `docs/limitations.md` (what the exchange does and does not: no fees, no short selling, no fractional shares, no market maker; markets not built)
-- [ ] T033 [P] Append to `specs/005-exchange-domain/research.md` "Found during implementation" what V1 to V7 showed and anything the plan said otherwise
+- [X] T033 [P] Append to `specs/005-exchange-domain/research.md` "Found during implementation" what V1 to V7 showed and anything the plan said otherwise
 - [ ] T034 `just fmt`, `sbt test`, `just check` (0 findings); run the quickstart's two checks that can fail and put the code back
 
 ## Dependencies
