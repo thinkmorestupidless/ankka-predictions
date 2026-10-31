@@ -255,9 +255,13 @@ abstract class ExchangeSteps(features: String) extends GherkinSuite(features):
     assertEquals((o.state, o.remaining), (OrderState.Cancelled, n(shares)))
   }
 
-  Then("the order is refused naming the {word}") { (reason: String) =>
+  /** A refusal for `reason` that carries what it names (`held` for the quantity held). */
+  private def naming(reason: String): Unit =
+    val name = if reason == "quantity held" then "held" else reason
     assertEquals(refusal.reason, reason)
-  }
+    assert(refusal.names.get(name).exists(_.nonEmpty), s"$refusal names no $name")
+
+  Then("the order is refused naming the {word}")(naming)
   Then("the order is refused naming the state {string}") { (state: String) =>
     assertEquals(refusal, Refusal("state", Map("state" -> state)))
   }
@@ -267,28 +271,22 @@ abstract class ExchangeSteps(features: String) extends GherkinSuite(features):
   Then("the order is refused naming the maximum position") { () =>
     assertEquals(refusal, Refusals.limit(Refusals.maximumPosition))
   }
-  Then("the order is refused naming the quantity held")(() =>
-    assertEquals(refusal.reason, "quantity held")
-  )
+  Then("the order is refused naming the quantity held")(() => naming("quantity held"))
   Then("the order is refused naming the id {string}") { (id: String) =>
     assertEquals(refusal, Refusals.id(OrderId(id)))
   }
   Then("the order is refused as not fillable whole")(() =>
     assertEquals(refusal, Refusals.notFillableWhole)
   )
-  Then("the cancel is refused naming the owner")(() => assertEquals(refusal.reason, "owner"))
+  Then("the cancel is refused naming the owner")(() => naming("owner"))
   Then("the cancel is refused naming the state {string}") { (state: String) =>
     assertEquals(refusal, Refusal("state", Map("state" -> state)))
   }
   Then("the split is refused naming the maximum position") { () =>
     assertEquals(refusal, Refusals.limit(Refusals.maximumPosition))
   }
-  Then("the merge is refused naming the quantity held")(() =>
-    assertEquals(refusal.reason, "quantity held")
-  )
-  Then("the command is refused naming the {word}") { (reason: String) =>
-    assertEquals(refusal.reason, reason)
-  }
+  Then("the merge is refused naming the quantity held")(() => naming("quantity held"))
+  Then("the command is refused naming the {word}")(naming)
   Then("the command is refused naming the state {string}") { (state: String) =>
     assertEquals(refusal, Refusal("state", Map("state" -> state)))
   }

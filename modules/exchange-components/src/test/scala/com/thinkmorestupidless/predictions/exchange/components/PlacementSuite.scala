@@ -107,7 +107,9 @@ class PlacementSuite extends munit.FunSuite:
   ) {
     val m = openMarket()
     ledger.throwing(OwnerId("cid"), times = 2)
-    assert(placed(buy(m, "cid", "o-2")).isInstanceOf[PlacementOutcome.Accepted], "o-2 was refused")
+    placed(buy(m, "cid", "o-2")) match
+      case _: PlacementOutcome.Accepted => ()
+      case other                        => fail(s"o-2 was not accepted: $other")
     assertEquals(
       ofMarket(m, "reserve").map(_.answer),
       Vector(Left("threw"), Left("threw"), Right(LedgerAnswer.Done))
