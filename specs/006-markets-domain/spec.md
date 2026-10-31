@@ -16,6 +16,18 @@ reason and evidence; final when the window passes. The market checks its own sha
 times; who may act is the consumer's resolution port, and the market records the operator it is
 told acted. Nothing reads a clock, a list of categories, a currency table or a network."
 
+## Clarifications
+
+### Session 2026-10-31
+
+- Q: May a resolved market be voided within its review window? → A: Yes, with a reason and
+  evidence, restarting the window as a correction does; after the window it is refused naming
+  the review window.
+- Q: After approval, which fields may change? → A: Approved and not yet open, every field but the
+  question, the outcomes and the currency; once open (or suspended, closed, resolved or void),
+  only the description, and the close through move close.
+- Q: Do the glossary's proposed terms stand? → A: All 21 accepted as defined.
+
 ## Context
 
 Spec 002 described the `markets` service: the lifecycle, the catalogue players read, the facts on
@@ -50,8 +62,9 @@ description, a category, two to twenty outcomes with distinct names, a currency,
 none, a close after the open time, an expected resolution date no earlier than the close,
 resolution criteria and an authority. The draft is refused naming the field that breaks a rule.
 Any field of a draft may be changed. Approval records the operator and the time; after it the
-question, the outcomes and the currency cannot change, and a draft whose close has passed cannot
-be approved.
+question, the outcomes and the currency cannot change, and once the market opens only its
+description can (its close moves through move close). A draft whose close has passed cannot be
+approved.
 
 **Why this priority**: Nothing opens without an approved market.
 
@@ -69,6 +82,8 @@ market; approve a draft whose close has passed; every refusal names its field.
 - added `features/markets/lifecycle.feature`: a draft with an empty question is refused
 - changed `features/markets/lifecycle.feature`: a draft may be changed by an operator until it is approved
 - changed `features/markets/lifecycle.feature`: an approved market's question and outcomes may not be changed
+- added `features/markets/lifecycle.feature`: an approved market's resolution criteria may be changed before it opens
+- added `features/markets/lifecycle.feature`: an open market's resolution criteria may not be changed
 - added `features/markets/lifecycle.feature`: a draft whose close has passed may not be approved
 
 ---
@@ -111,8 +126,8 @@ source, a locator and an excerpt) and the authority; a resolution with no eviden
 the market lacks, or on a market that is not closed is refused. A resolution may be corrected to a
 different outcome within the review window, on evidence; the correction revises the first and
 restarts the window; a correction after the window, or to the outcome already resolved, is
-refused. An approved, open or closed market may be voided with a reason and evidence; a draft or
-a final market may not. A resolved or void market is final when its review window passes and is
+refused. An approved, open or closed market may be voided with a reason and evidence, and a
+resolved one within its review window; a draft or a final market may not. A resolved or void market is final when its review window passes and is
 refused finality before.
 
 **Why this priority**: Resolution is where money is decided; its evidence is the product's
@@ -135,6 +150,8 @@ final early and on time; every refusal names its reason.
 - added `features/markets/resolution.feature`: a resolved market is not made final before the review window passes
 - changed `features/markets/resolution.feature`: an approved market is voided with a reason and evidence
 - added `features/markets/resolution.feature`: a void is final when the review window passes
+- added `features/markets/resolution.feature`: a resolved market is voided within its review window
+- added `features/markets/resolution.feature`: a resolved market may not be voided after the review window
 - added `features/markets/resolution.feature`: a final market may not be voided
 - added `features/markets/resolution.feature`: a draft market may not be voided
 
@@ -188,15 +205,15 @@ purity.
   is keyed, since neither moves money.
 - A void of a suspended market: allowed, as of an open one; a close moved while suspended: as
   while open.
-- A void of a resolved market within the review window: spec 002 allowed void from approved, open
-  or closed only, and a wrong outcome is corrected; a market whose question turned out to have no
-  answer has no path from resolved to void. [NEEDS CLARIFICATION: whether a resolved market may
-  be voided within its review window]
+- A void of a resolved market: allowed within the review window, for a question that turned out
+  to have no answer (a wrong outcome is corrected instead); it restarts the window; after the
+  window it is refused naming the review window. Spec 002 allowed void from approved, open or
+  closed only.
 - The categories and currencies a product allows: checked by the consumer before the draft
   command; the domain keeps both as text. Spec 002 FR-011 (a category in use cannot be removed)
   is the consumer's and is asked of ankka-modules in `notes/casino-requests.md`.
-- Who may approve, and whether the drafter may: the resolution port's; carried by ankka-modules
-  spec 023 as its clarification.
+- Who may approve, and whether the drafter may: the resolution port's. ankka-modules spec 023
+  answered it (2026-10-31): one operator approves, and the drafter may.
 
 ## Requirements *(mandatory)*
 
@@ -227,9 +244,11 @@ purity.
   there is none), an expected resolution date no earlier than the close, resolution criteria of 1
   to 2,000 characters and an authority of 1 to 200; a draft breaking any of these MUST be refused
   naming the field. The category and the currency are text to the domain.
-- **FR-005**: Any field of a draft MAY be changed under the same rules; after approval the
-  question, the outcomes and the currency MUST NOT change, and a change to them MUST be refused
-  naming the state.
+- **FR-005**: Any field of a draft MAY be changed under the same rules. An approved market not
+  yet open MAY change every field but the question, the outcomes and the currency. Once open,
+  suspended, closed, resolved or void, only the description MAY change, and the close only
+  through move close (FR-008); a final market refuses every change (FR-012). Any other change
+  MUST be refused naming the state.
 
 **Opening and closing**
 
@@ -258,8 +277,9 @@ purity.
   it names the outcome already resolved; otherwise it MUST record a resolution revising the first,
   with evidence, and restart the review window from its time.
 - **FR-011**: A void MUST be refused naming the state unless the market is approved, open,
-  suspended or closed; otherwise it MUST record a reason, at least one piece of evidence, the operator, the
-  time and the end of the review window.
+  suspended, closed or resolved, and naming the review window when it is resolved and the window
+  has ended; otherwise it MUST record a reason, at least one piece of evidence, the operator, the
+  time and the end of a review window from its time.
 - **FR-012**: A finalise MUST be refused naming the review window before its end and naming the
   state unless the market is resolved or void; at or after the end the market MUST be final, and
   final it MUST refuse every command but a repeat of finalise, which produces no event.

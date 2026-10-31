@@ -80,6 +80,16 @@ Feature: Closing and resolving a market
     When the time "2027-05-26T10:00:00Z" comes
     Then the market "m-14" is a final market
 
+  Scenario: a resolved market is voided within its review window
+    Given a resolved market "m-18" resolved to "yes" "2" hours ago
+    When "olga" voids the market "m-18" with the reason "the question had no answer" on the evidence "premierleague.com" at "https://premierleague.com/news" saying "the season was abandoned"
+    Then the market "m-18" is a void market
+
+  Scenario: a resolved market may not be voided after the review window
+    Given a resolved market "m-19" resolved to "yes" "25" hours ago
+    When "olga" voids the market "m-19" with the reason "the question had no answer" on the evidence "premierleague.com" at "https://premierleague.com/news" saying "the season was abandoned"
+    Then the void is refused naming the review window
+
   Scenario: a final market may not be voided
     Given a final market "m-15"
     When "olga" voids the market "m-15" with the reason "a mistake" on the evidence "premierleague.com" at "https://premierleague.com/news" saying "the fixture was cancelled"
