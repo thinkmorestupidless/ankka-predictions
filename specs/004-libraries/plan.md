@@ -22,8 +22,8 @@ that specs 005 and 006 fill.
 ## Technical Context
 
 **Language/Version**: Scala 3.9.0, JDK 21, sbt 1.12.x (the family's line)
-**Primary Dependencies**: `ankka-core` 0.12.0 (domains); `ankka-sdk` 0.12.0 (components);
-`ankka-testkit` 0.12.0 and munit 1.3.6, munit-scalacheck (tests); `sbt-ci-release` 1.12.1
+**Primary Dependencies**: `ankka-core` 0.14.2 (domains); `ankka-sdk` 0.14.2 (components);
+`ankka-testkit` 0.14.2 and munit 1.3.6, munit-scalacheck (tests); `sbt-ci-release` 1.12.1
 **Storage**: none in the libraries; the components' suites use `AnkkaTestKit`'s throwaway Postgres
 **Testing**: munit; the living features through the testkit's Gherkin runner; property suites;
 journal fixtures
@@ -140,6 +140,8 @@ T5 can start its safe part (scripted ports, suites, fixture format) against the 
 pass `components.feature` until T3 has landed, and it must not write a matching rule to get there.
 
 ## Open at the gate
+
+*Accepted as written by Trevor, 2026-10-31, all five; ankka pinned at 0.14.2 the same day.*
 
 1. Artefact ids `ankka-predictions-<module>` (R2). Alternatives: `predictions-<module>`.
 2. The ledger patience is the consumer's, with no default (R8); confirm or set a default.

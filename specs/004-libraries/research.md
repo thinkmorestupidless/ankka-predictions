@@ -277,7 +277,7 @@ that (`notes/casino-requests.md`, item 9).
   in its doc comment says so).
 - **V3.** The release job can read the fixture directory for the tag's version before
   `ci-release`, or the check moves into a test the job runs.
-- **V4.** The Gherkin runner in `ankka-testkit` 0.12.0 runs a feature directory with step
+- **V4.** The Gherkin runner in `ankka-testkit` 0.14.2 runs a feature directory with step
   definitions and no actor system started (voice's domain suites are the precedent to read).
 - **V5.** A `TimedAction` hosted by the consumer can be scheduled from an entity in a library
   module through `EventSourcedEntityContext` (or the components expose the scheduling as a
@@ -288,7 +288,9 @@ that (`notes/casino-requests.md`, item 9).
 
 ## Found during implementation
 
-(appended as the work goes)
+- **2026-10-31, the ankka pin.** `V.ankka` is 0.14.2, the family's current release (Trevor),
+  not the 0.12.0 this plan was written against; ankka-modules' predictions module moves to it when
+  it is built. The gate's five open items were accepted as written.
 
 ## Requests
 
