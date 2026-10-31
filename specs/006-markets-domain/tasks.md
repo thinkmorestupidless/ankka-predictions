@@ -82,9 +82,9 @@ Paths: `MK` = `modules/markets-domain/src/main/scala/com/thinkmorestupidless/pre
 
 ## Phase 8: The components stand on the real domain
 
-- [ ] T020 In `MKCT/ComponentsFeatures.scala`, `MKCT/MarketsComponentsSuite.scala` and any other test that drafts, make each definition valid under R3 (V3). Nothing in `src/main` changes
-- [ ] T021 In `MKCT/JournalFixtureWriter.scala` add `resolved.jsonl` and `voided.jsonl` (R13); delete `modules/markets-components/src/test/resources/journal/0.0.0/` and run `sbt "marketsComponents/Test/runMain com.thinkmorestupidless.predictions.markets.components.JournalFixtureWriter 0.0.0"`; confirm `opened.jsonl` and `every-event.jsonl` are unchanged (V2)
-- [ ] T022 `sbt marketsComponents/test` green (Docker)
+- [X] T020 In `MKCT/ComponentsFeatures.scala`, `MKCT/MarketsComponentsSuite.scala` and any other test that drafts, make each definition valid under R3 (V3). Nothing in `src/main` changes
+- [X] T021 In `MKCT/JournalFixtureWriter.scala` add `resolved.jsonl` and `voided.jsonl` (R13); delete `modules/markets-components/src/test/resources/journal/0.0.0/` and run `sbt "marketsComponents/Test/runMain com.thinkmorestupidless.predictions.markets.components.JournalFixtureWriter 0.0.0"`; confirm `opened.jsonl` and `every-event.jsonl` are unchanged (V2)
+- [X] T022 `sbt marketsComponents/test` green (Docker)
 
 ## Phase 9: Polish
 
