@@ -167,6 +167,12 @@ class MarketsFeatures extends GherkinSuite("features/markets"):
         MarketCommand.Change(op(by), definition(id).copy(question = question), world.now)
       ): Unit
   }
+  When("{string} changes the market {string} to open with no open time") { (by: String, id: String) =>
+    world.apply(
+      id,
+      MarketCommand.Change(op(by), definition(id).copy(openTime = None), world.now)
+    ): Unit
+  }
   When("{string} changes the resolution criteria of the market {string} to {string}") {
     (by: String, id: String, criteria: String) =>
       world.apply(

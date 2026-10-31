@@ -28,8 +28,9 @@ object Drafting:
 
   /**
    * Whether a change to `d` may be made to the market at `at`: a draft any field, an approved
-   * market not the question, the outcomes or the currency, an open one to a void one only the
-   * description, a final or empty one nothing; then the field rules; then that something changed.
+   * market not the question, the outcomes or the currency and only with an open time still ahead,
+   * an open one to a void one only the description, a final or empty one nothing; then the field
+   * rules; then that something changed.
    */
   def change(market: Market, d: Definition, at: Instant): Option[Refusal] =
     market.definition match
@@ -43,7 +44,11 @@ object Drafting:
               MarketState.Resolved | MarketState.Void =>
             d.copy(description = was.description) != was
           case MarketState.Empty | MarketState.Final => true
+        // An approved market keeps an open time ahead, so it is always due to open (research R4).
+        val noOpening =
+          market.state == MarketState.Approved && d.openTime.forall(!_.isAfter(at))
         if fixed then Some(Refusals.state(market.state))
+        else if noOpening then Some(Refusals.field("open time"))
         else if d == was then Some(Refusals.noChange)
         else if d.copy(description = was.description) == was then
           Option.when(length(d.description) > 5_000)(Refusals.field("description"))

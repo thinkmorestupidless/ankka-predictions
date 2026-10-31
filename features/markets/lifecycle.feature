@@ -79,6 +79,12 @@ Feature: A market's life
     When "olga" changes the resolution criteria of the market "m-24" to "The final Premier League table, as published"
     Then the market "m-24" has the resolution criteria "The final Premier League table, as published"
 
+  Scenario: an approved market's open time may not be removed
+    Given an approved market "m-26" opening at "2026-11-01T09:00:00Z"
+    When "olga" changes the market "m-26" to open with no open time
+    Then the change is refused naming the open time
+    And the market "m-26" is next due at "2026-11-01T09:00:00Z"
+
   Scenario: an open market's resolution criteria may not be changed
     Given an open market "m-25" closing at "2027-05-24T00:00:00Z"
     When "olga" changes the resolution criteria of the market "m-25" to "The table on 1 May"

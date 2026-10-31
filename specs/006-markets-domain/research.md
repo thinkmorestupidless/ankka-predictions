@@ -58,12 +58,16 @@ any field but the question, the outcomes and the currency (a difference in one o
 refused naming the state), under R3. Open, suspended, closed, resolved or void: only the
 description; a difference in any other field, the close included, is refused naming the state.
 Final: refused naming the state (FR-012). A change whose definition equals the market's is
-refused as no change. An approved market whose new open time has already passed is not opened by
-the change: `nextDue` then says the open time, and the consumer's timer applies the open at once.
+refused as no change. An approved market's change must keep an open time after the change's time:
+one that removes it, or moves it to the change's time or earlier, is refused naming the open time
+(`field("open time")`; Trevor, 2026-10-31, after the review found such a market left approved with
+nothing due). With the close after the open time (R3), the close is then after the change too.
 
 **Rationale**: the clarification of 2026-10-31. Refusing an identical change keeps the record to
-what changed. Opening inside a change would make one command two transitions the scenarios do not
-describe; the timer path already exists.
+what changed. An approved market always has an open time ahead, so it is always due to open.
+
+**Alternatives**: opening the market in the same change (as approval does); a `nextDue` of the
+change's time. Both declined.
 
 ## R5. Approve and open
 

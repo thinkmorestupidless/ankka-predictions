@@ -88,13 +88,19 @@ class DraftingSuite extends munit.FunSuite:
     assertEquals(refused(valid.copy(authority = "x" * 201)), Some("authority"))
   }
 
+  private val opens = at.plusSeconds(86_400)
+
   private def market(state: MarketState) =
-    Market(MarketId("m-1"), Some(valid), state, lastTime = Some(at))
+    val d = if state == MarketState.Approved then valid.copy(openTime = Some(opens)) else valid
+    Market(MarketId("m-1"), Some(d), state, lastTime = Some(at))
 
   test("a change touches only what the state allows, and something must change") {
     val criteria = valid.copy(criteria = "The table as published")
     assertEquals(Drafting.change(market(MarketState.Draft), criteria, at), None)
-    assertEquals(Drafting.change(market(MarketState.Approved), criteria, at), None)
+    assertEquals(
+      Drafting.change(market(MarketState.Approved), criteria.copy(openTime = Some(opens)), at),
+      None
+    )
     assertEquals(
       Drafting.change(market(MarketState.Approved), valid.copy(question = "Will it rain?"), at),
       Some(Refusals.state(MarketState.Approved))
@@ -112,4 +118,25 @@ class DraftingSuite extends munit.FunSuite:
       Some(Refusals.state(MarketState.Final))
     )
     assertEquals(Drafting.change(market(MarketState.Draft), valid, at), Some(Refusals.noChange))
+  }
+
+  test("an approved market's change keeps an open time after the change's time") {
+    val approved = market(MarketState.Approved)
+    assertEquals(
+      Drafting.change(approved, valid.copy(openTime = None), at),
+      Some(Refusals.field("open time"))
+    )
+    assertEquals(
+      Drafting.change(approved, valid.copy(openTime = Some(at)), at),
+      Some(Refusals.field("open time"))
+    )
+    // Both moved into the past: refused for the open time, so it never opens past its close.
+    assertEquals(
+      Drafting.change(
+        approved,
+        valid.copy(openTime = Some(at.minusSeconds(7_200)), close = at.minusSeconds(3_600)),
+        at
+      ),
+      Some(Refusals.field("open time"))
+    )
   }

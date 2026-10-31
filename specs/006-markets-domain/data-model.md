@@ -33,7 +33,7 @@ Every command is first refused as out of order when its time is before `lastTime
 | Command | Refusals, in order | Events |
 |---|---|---|
 | `Draft` | state not empty (`state`); the fields (`field`, R3) | `Drafted` |
-| `Change` | state final (`state`); approved and the question, outcomes or currency differ (`state`); open or later and any field but the description differs (`state`); the fields (`field`); the definition unchanged (`no change`) | `Changed` |
+| `Change` | state final (`state`); approved and the question, outcomes or currency differ (`state`); approved and the open time none or at or before the time (`field` open time); open or later and any field but the description differs (`state`); the fields (`field`); the definition unchanged (`no change`) | `Changed` |
 | `Approve` | not draft (`state`); close at or before the time (`close`) | `Approved`, and `Opened` when the open time is none or at or before the time |
 | `Open` | not approved (`state`); before the open time (`open time`) | `Opened` |
 | `Suspend` | not open (`state`); reason blank (`field` reason) | `Suspended` |
@@ -51,5 +51,6 @@ Every command is first refused as out of order when its time is before `lastTime
 2. The journal replayed onto `Market.empty` equals the value.
 3. `lastTime` never goes back, and is the last event's time.
 4. The record has one entry per event, in order.
-5. `nextDue` is what FR-013 says for the state.
+5. `nextDue` is what FR-013 says for the state, worked out from the events alone; an approved
+   market always has one.
 6. A final market refuses every command but finalise, which yields no event.

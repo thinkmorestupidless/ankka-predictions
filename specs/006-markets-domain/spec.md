@@ -27,6 +27,9 @@ told acted. Nothing reads a clock, a list of categories, a currency table or a n
   question, the outcomes and the currency; once open (or suspended, closed, resolved or void),
   only the description, and the close through move close.
 - Q: Do the glossary's proposed terms stand? → A: All 21 accepted as defined.
+- Q: (found in review) May a change to an approved market remove its open time or move it to now
+  or earlier, which would leave it approved with nothing due? → A: No; refused naming the open
+  time.
 
 ## Context
 
@@ -83,6 +86,7 @@ market; approve a draft whose close has passed; every refusal names its field.
 - changed `features/markets/lifecycle.feature`: a draft may be changed by an operator until it is approved
 - changed `features/markets/lifecycle.feature`: an approved market's question and outcomes may not be changed
 - added `features/markets/lifecycle.feature`: an approved market's resolution criteria may be changed before it opens
+- added `features/markets/lifecycle.feature`: an approved market's open time may not be removed
 - added `features/markets/lifecycle.feature`: an open market's resolution criteria may not be changed
 - added `features/markets/lifecycle.feature`: a draft whose close has passed may not be approved
 
@@ -249,7 +253,8 @@ purity.
   to 2,000 characters and an authority of 1 to 200; a draft breaking any of these MUST be refused
   naming the field. The category and the currency are text to the domain.
 - **FR-005**: Any field of a draft MAY be changed under the same rules. An approved market not
-  yet open MAY change every field but the question, the outcomes and the currency. Once open,
+  yet open MAY change every field but the question, the outcomes and the currency, keeping an
+  open time after the change's time (else refused naming the open time). Once open,
   suspended, closed, resolved or void, only the description MAY change, and the close only
   through move close (FR-008); a final market refuses every change (FR-012). Any other change
   MUST be refused naming the state.
