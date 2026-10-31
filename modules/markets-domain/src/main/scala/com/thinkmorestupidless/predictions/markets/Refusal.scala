@@ -19,7 +19,8 @@ object Refusals:
   /**
    * A field that breaks its rule, by the name the scenarios use: `question`, `description`,
    * `category`, `outcomes`, `currency`, `close`, `expected resolution date`, `resolution criteria`,
-   * `authority`, or a blank `reason` (spec 006 research R3, R8).
+   * `authority`, a blank `reason`, or an approved market's `open time` not ahead of a change (spec
+   * 006 research R3, R4, R8).
    */
   def field(name: String): Refusal   = Refusal("field", Map("field" -> name))
   def openTime(at: Instant): Refusal = Refusal("open time", Map("open time" -> at.toString))

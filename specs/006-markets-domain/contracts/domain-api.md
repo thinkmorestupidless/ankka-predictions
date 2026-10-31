@@ -22,7 +22,7 @@ final case class Market(...):
 |---|---|---|
 | `out of order` | `last`, `at` | the command's time is before the market's last change |
 | `state` | `state` (`empty`, `draft`, `approved`, `open`, `suspended`, `closed`, `resolved`, `void`, `final`) | the command does not apply in this state, or a change touches a field the state fixes |
-| `field` | `field`: `question`, `description`, `category`, `outcomes`, `currency`, `close`, `expected resolution date`, `resolution criteria`, `authority`, `reason`, `open time` | a field breaks its rule (research R3), a reason is blank, or a change to an approved market leaves it no open time ahead (R4) |
+| `field` | `field`: `question`, `description`, `category`, `outcomes`, `currency`, `close`, `expected resolution date`, `resolution criteria`, `authority`, `reason`, `open time` | a field breaks its rule (research R3), a reason or a resolve's authority is blank, or a change to an approved market leaves it no open time ahead (R4) |
 | `close` | `close` | an approval or an open at or after the close; an early close without an operator and a reason; a close moved no later |
 | `open time` | `open time` | an open before the open time |
 | `outcome` | `outcome` | a resolution or correction to an outcome the market does not have |

@@ -40,7 +40,7 @@ Every command is first refused as out of order when its time is before `lastTime
 | `Resume` | not suspended (`state`) | `Resumed` |
 | `Close` | not open or suspended (`state`); before the close without an operator and a non-blank reason (`close`) | `Closed` |
 | `MoveClose` | not open or suspended (`state`); the new close at or before the current (`close`); reason blank (`field` reason) | `CloseMoved` with the expected resolution date moved to the new close's date where earlier |
-| `Resolve` | not closed (`state`); the outcome not the market's (`outcome`); no evidence or a blank part (`evidence`); a negative window (`review window`) | `Resolved` with the window's end |
+| `Resolve` | not closed (`state`); the outcome not the market's (`outcome`); no evidence or a blank part (`evidence`); a blank authority (`field` authority); a negative window (`review window`) | `Resolved` with the window's end |
 | `Correct` | not resolved (`state`); the window ended (`review window`); the outcome not the market's (`outcome`); evidence (`evidence`); the outcome in force (`no change`); a negative window (`review window`) | `Corrected` with a new window's end |
 | `Void` | not approved, open, suspended, closed or resolved (`state`); resolved and the window ended (`review window`); reason blank (`field` reason); evidence (`evidence`); a negative window (`review window`) | `Voided` with the window's end |
 | `Finalise` | final: answered with no event; not resolved or void (`state`); before the window's end (`review window`) | `Final` |

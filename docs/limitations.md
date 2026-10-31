@@ -36,6 +36,8 @@ that goes past this page is a defect in the claim.
   consumer checks first).
 - It keeps the category and the currency as text; which a product offers is the consumer's.
 - It reads no clock: the consumer's timer applies the open, the close and the finality.
+- A market whose open comes after its close stays approved and is refused the open; the domain
+  raises nothing, so finding it (and voiding it or moving both times) is the consumer's.
 
 ## Not built
 

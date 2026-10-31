@@ -269,8 +269,9 @@ purity.
   MUST record the operator and the time and, when there is no open time or it has passed, open
   the market in the same change.
 - **FR-007**: An open MUST be refused naming the open time before it, and naming the close at or
-  after the close; between them the market MUST be open. A close MUST be refused naming the state unless the market is open or suspended;
-  at or after the close it needs no reason, before it an operator and a reason MUST be recorded.
+  after the close; between them the market MUST be open. A close MUST be refused naming the state
+  unless the market is open or suspended; at or after the close it needs no reason, before it an
+  operator and a reason MUST be recorded.
 - **FR-007a**: A suspend MUST be refused naming the state unless the market is open; otherwise it
   MUST record the operator, the time and a reason, and the market MUST be suspended. A resume MUST
   be refused naming the state unless the market is suspended; otherwise it MUST record the
@@ -301,7 +302,8 @@ purity.
 **The record and the next due time**
 
 - **FR-013**: The value MUST answer, for each change, the operator, the time and the reason, and
-  MUST answer the time it is next due: the open time while approved and ahead, the close while
+  MUST answer the time it is next due: the open time while approved (passed, when an open was
+  refused for its close), the close while
   open or suspended, the end of the review window while resolved or void, none otherwise.
 
 **Events**
