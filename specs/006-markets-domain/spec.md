@@ -30,6 +30,8 @@ told acted. Nothing reads a clock, a list of categories, a currency table or a n
 - Q: (found in review) May a change to an approved market remove its open time or move it to now
   or earlier, which would leave it approved with nothing due? → A: No; refused naming the open
   time.
+- Q: (found in review) May an approved market's open be applied after its close has passed, as
+  a late timer would? → A: No; refused naming the close, and the market stays approved.
 
 ## Context
 
@@ -87,6 +89,7 @@ market; approve a draft whose close has passed; every refusal names its field.
 - changed `features/markets/lifecycle.feature`: an approved market's question and outcomes may not be changed
 - added `features/markets/lifecycle.feature`: an approved market's resolution criteria may be changed before it opens
 - added `features/markets/lifecycle.feature`: an approved market's open time may not be removed
+- added `features/markets/lifecycle.feature`: an approved market is not opened after its close
 - added `features/markets/lifecycle.feature`: an open market's resolution criteria may not be changed
 - added `features/markets/lifecycle.feature`: a draft whose close has passed may not be approved
 
@@ -264,8 +267,8 @@ purity.
 - **FR-006**: An approve MUST be refused naming the close when the close has passed; otherwise it
   MUST record the operator and the time and, when there is no open time or it has passed, open
   the market in the same change.
-- **FR-007**: An open MUST be refused naming the open time before it; at or after it the market
-  MUST be open. A close MUST be refused naming the state unless the market is open or suspended;
+- **FR-007**: An open MUST be refused naming the open time before it, and naming the close at or
+  after the close; between them the market MUST be open. A close MUST be refused naming the state unless the market is open or suspended;
   at or after the close it needs no reason, before it an operator and a reason MUST be recorded.
 - **FR-007a**: A suspend MUST be refused naming the state unless the market is open; otherwise it
   MUST record the operator, the time and a reason, and the market MUST be suspended. A resume MUST

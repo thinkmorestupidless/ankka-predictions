@@ -35,7 +35,7 @@ Every command is first refused as out of order when its time is before `lastTime
 | `Draft` | state not empty (`state`); the fields (`field`, R3) | `Drafted` |
 | `Change` | state final (`state`); approved and the question, outcomes or currency differ (`state`); approved and the open time none or at or before the time (`field` open time); open or later and any field but the description differs (`state`); the fields (`field`); the definition unchanged (`no change`) | `Changed` |
 | `Approve` | not draft (`state`); close at or before the time (`close`) | `Approved`, and `Opened` when the open time is none or at or before the time |
-| `Open` | not approved (`state`); before the open time (`open time`) | `Opened` |
+| `Open` | not approved (`state`); before the open time (`open time`); at or after the close (`close`) | `Opened` |
 | `Suspend` | not open (`state`); reason blank (`field` reason) | `Suspended` |
 | `Resume` | not suspended (`state`) | `Resumed` |
 | `Close` | not open or suspended (`state`); before the close without an operator and a non-blank reason (`close`) | `Closed` |

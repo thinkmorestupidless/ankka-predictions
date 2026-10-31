@@ -74,7 +74,9 @@ change's time. Both declined.
 **Decision**: approve: a draft only (state); a close at or before the command's time is refused
 naming the close; otherwise `Approved`, and `Opened` in the same decision when there is no open
 time or it is at or before the command's time. Open: approved only (state); before the open time
-refused naming the open time; at or after it `Opened`.
+refused naming the open time; at or after the close refused naming the close (Trevor, 2026-10-31:
+a late timer never makes a market tradeable past its close; it stays approved, for an operator to
+void or to change both times ahead); otherwise `Opened`.
 
 **Rationale**: FR-006 and FR-007, as spec 004 began them; "at or after" is inclusive throughout,
 so a timer firing exactly on time succeeds.

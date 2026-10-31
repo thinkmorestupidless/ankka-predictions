@@ -132,7 +132,10 @@ object Market:
         .filter(_.isAfter(c.at))
         .map(Refusals.openTime)
         .toLeft(())
-      d <- decide(market, Vector(MarketEvent.Opened(c.at)))
+      // A late open never makes a market tradeable past its close (research R5).
+      defn <- defined(market)
+      _    <- Either.cond(defn.close.isAfter(c.at), (), Refusals.close(defn.close))
+      d    <- decide(market, Vector(MarketEvent.Opened(c.at)))
     yield d
 
   private def suspend(market: Market, c: MarketCommand.Suspend): Either[Refusal, Decision] =

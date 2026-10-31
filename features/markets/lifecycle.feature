@@ -85,6 +85,12 @@ Feature: A market's life
     Then the change is refused naming the open time
     And the market "m-26" is next due at "2026-11-01T09:00:00Z"
 
+  Scenario: an approved market is not opened after its close
+    Given an approved market "m-27" opening at "2026-11-01T09:00:00Z" and closing at "2026-11-08T00:00:00Z"
+    When the time "2026-11-09T00:00:00Z" comes
+    Then the open is refused naming the close
+    And the market "m-27" is an approved market
+
   Scenario: an open market's resolution criteria may not be changed
     Given an open market "m-25" closing at "2027-05-24T00:00:00Z"
     When "olga" changes the resolution criteria of the market "m-25" to "The table on 1 May"
