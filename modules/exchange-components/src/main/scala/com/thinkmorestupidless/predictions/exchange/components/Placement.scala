@@ -61,7 +61,9 @@ final class Placement(ports: ExchangePorts, steps: PlacementWorkflow, ctx: Workf
 
   def place(request: PlaceOrder): WorkflowEffect[PlacementState, PlacementOutcome] =
     currentState.request match
-      case Some(first) if first == request => effects.reply(currentState.outcome)
+      // A repeat is the same order whenever it was sent: its time is the caller's clock, not its terms.
+      case Some(first) if first == request.copy(order = request.order.copy(at = first.order.at)) =>
+        effects.reply(currentState.outcome)
       case Some(_) =>
         effects.error(
           s"the order ${request.order.order.value} was placed on other terms",

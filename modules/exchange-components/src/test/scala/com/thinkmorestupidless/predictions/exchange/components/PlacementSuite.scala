@@ -139,12 +139,13 @@ class PlacementSuite extends munit.FunSuite:
     nothingRests(m)
   }
 
-  test("a repeat of a placement is answered with what the first recorded, and asks nothing again") {
+  test("a repeat of a placement, sent at any time, is answered with what the first recorded, and asks nothing again") {
     val m       = openMarket()
     val request = buy(m, "eve", "o-4")
     val first   = placed(request)
     val asked   = ledger.calls.size
     assertEquals(placed(request), first)
+    assertEquals(placed(request.copy(order = request.order.copy(at = request.order.at.plusSeconds(5)))), first)
     assertEquals(ledger.calls.size, asked)
   }
 
