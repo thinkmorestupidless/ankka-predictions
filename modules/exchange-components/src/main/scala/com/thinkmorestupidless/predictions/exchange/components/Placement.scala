@@ -46,7 +46,8 @@ object PlacementState:
 
 /**
  * One order's way onto the book (research R7), under the id `<market>/<order>`: the gate, then for
- * a buy the reservation of its cost, then the exchange; a buy the exchange refuses is released
+ * a buy the reservation of its cost, then the exchange (an order priced or sized below one goes to
+ * the exchange alone, which refuses it); a buy the exchange refuses is released
  * under ordinal 0. `place` is the start and the claim: a repeat is answered with what the first
  * recorded. The book never waits on the ledger, because the entity is reached only once the money
  * is held.
@@ -72,9 +73,12 @@ final class Placement(ports: ExchangePorts, steps: PlacementWorkflow, ctx: Workf
           ErrorCode.BadRequest
         )
       case None =>
+        // A price or a quantity below one is refused by the exchange whatever its unit, so such an
+        // order goes straight to it: nothing is gated, and no reservation of nothing or less is asked.
+        val unfit = request.order.price < 1 || request.order.quantity < 1
         effects
           .updateState(PlacementState(Some(request)))
-          .transitionTo(steps.gate.ref)
+          .transitionTo(if unfit then steps.applyStep.ref else steps.gate.ref)
           .thenReply(PlacementOutcome.Running)
 
   def outcome: WorkflowReadOnlyEffect[PlacementState, PlacementOutcome] =

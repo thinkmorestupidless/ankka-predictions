@@ -44,7 +44,7 @@ class PlacementSuite extends munit.FunSuite:
   private def exchange(m: MarketId) = kit.componentClient.forEventSourcedEntity(EntityId(m.value))
 
   /** A buy of ten at 60, or at `price`; at the unit's price the exchange refuses it. */
-  private def buy(m: MarketId, owner: String, order: String, price: Long = 60): PlaceOrder =
+  private def buy(m: MarketId, owner: String, order: String, price: Long = 60, quantity: Long = 10): PlaceOrder =
     PlaceOrder(
       m,
       ExchangeCommand.Place(
@@ -53,7 +53,7 @@ class PlacementSuite extends munit.FunSuite:
         OutcomeId("yes"),
         Side.Buy,
         price,
-        10,
+        quantity,
         OrderDuration.RestUntilClose,
         Instant.now()
       )
@@ -99,6 +99,17 @@ class PlacementSuite extends munit.FunSuite:
     assertEquals(placed(buy(m, "ada", "o-1", 100)), PlacementOutcome.Refused(Refusals.price(100)))
     assertEquals(ofMarket(m, "reserve").map(c => (c.key, c.amount)), Vector("o-1" -> 1000L))
     assertEquals(ofMarket(m, "release").map(c => (c.key, c.amount)), Vector("o-1/0" -> 1000L))
+    nothingRests(m)
+  }
+
+  test("a buy priced or sized below one is refused by the exchange, with no gate asked and nothing reserved") {
+    val m = openMarket()
+    assertEquals(placed(buy(m, "eve", "o-4", price = 0)), PlacementOutcome.Refused(Refusals.price(0)))
+    assertEquals(placed(buy(m, "eve", "o-5", price = -5)), PlacementOutcome.Refused(Refusals.price(-5)))
+    assertEquals(placed(buy(m, "eve", "o-6", quantity = 0)), PlacementOutcome.Refused(Refusals.quantity("0")))
+    assertEquals(placed(buy(m, "eve", "o-7", quantity = -1)), PlacementOutcome.Refused(Refusals.quantity("-1")))
+    assertEquals(gate.asked.filter(_._2 == m), Vector.empty)
+    assertEquals(ofMarket(m, "reserve") ++ ofMarket(m, "release"), Vector.empty)
     nothingRests(m)
   }
 
