@@ -318,6 +318,26 @@ All four by Trevor, 2026-10-31, through the design run.
   `every-event.jsonl` still replays to its recorded state (the snapshot without the field decodes
   it as 0). The decrement on a buy leg is in `PositionMoves`, beside a sell leg's
   `restingUnderSells`, so the two are kept by one rule; the positions view ignores both.
+- **2026-10-31, "X is released N".** A fill-at-once buy that trades at a better price releases
+  twice: the improvement under the trade's ordinal and the remainder under the next
+  (`matching.feature`: 50, then 900). The step holds when one release to the owner in the last
+  answer is N, as each release is its own keyed move; the scenario is unchanged.
+- **2026-10-31, the place's id is checked first.** Before the state and the fields, so a repeat
+  after the exchange moved on (closed, say) is still answered as the first was (R5); the
+  data model's order of refusals otherwise stands.
+- **2026-10-31, six values a step.** `GherkinSuite` binds at most six values, so the place steps
+  are bound once per side with the side in the text. The steps every feature shares are in
+  `ExchangeSteps` (an abstract `GherkinSuite`), the world in `ExchangeWorld`.
+- **2026-10-31, one commit for the command bodies.** T005, T009 to T012, T014, T016, T017 and T019
+  all write `Exchange.scala` or the matcher; they were written together and committed as one,
+  with the bindings (T006 to T008, T013, T015, T018, T020, T021) as the next. 65 scenarios of
+  `features/exchange/` and the four exchange scenarios of `domain.feature` pass against them.
+- **2026-10-31, V1 to V4.** V1: a `{string}` reaches a `String` definition as written, so `"2.5"`
+  is refused by `Quantity.of`. V2: `scalaCheckTestParameters.withMinSuccessfulTests` takes; the
+  suite counts and prints 100,000 sequences. V3: the default run takes about seven seconds, and
+  prints what the sequences did (every event kind occurs; merges through the pool are the rarest,
+  about 200). V4: the domain's medians on a laptop are 0.03 ms for a resting place and 0.17 ms for
+  a matching one, on 11,000 resting orders.
 
 ## Requests
 
