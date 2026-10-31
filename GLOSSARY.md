@@ -30,7 +30,7 @@ A player seen through their forecasts and their record, rather than their money.
 ## Money
 
 ### wallet
-A player's ledger account in one currency: available money and reserved money. The one place money
+A player's ledger account in one currency: available money and its reservations. The one place money
 is kept in this product.
 Avoid: balance sheet
 
@@ -38,22 +38,18 @@ Avoid: balance sheet
 The part of a wallet a player may reserve, withdraw or spend now.
 Avoid: free balance
 
-### reserved money
-The part of a wallet set aside against the player's resting orders. Released when an order is
-cancelled, expires or is filled at a better price; moved when a trade settles.
-Avoid: locked funds, escrow
-
 ### reservation
-The reserved money that one order holds, keyed by the order.
+The money one buy order's cost sets aside from its owner's available money, keyed by the order,
+until a trade charges it or a release gives it back.
 
-### deposit
-Money arriving in a wallet from the payments stack, keyed by its payment.
-
-### withdrawal
-Money leaving a wallet through the payments stack, as the casino's `payouts` service runs it.
+### reserve
+*Proposed.* To set a buy order's cost aside from its owner's available money before the order
+reaches the book, keyed by the order: the consumer's ledger does it when the placement asks.
+What it sets aside is a reservation; giving part of it back is a release.
 
 ### hold
-Reserved money a withdrawal request takes while it is reviewed and paid, keyed by the request.
+*Proposed.* To own shares of an outcome: a player holds the quantity of their position. The
+wallet's hold on money for a withdrawal is ankka-modules' word, not this project's.
 
 ### minor unit
 The smallest unit of a currency; a penny of a pound. Every amount in this product is a whole number
@@ -71,26 +67,6 @@ Avoid: idempotency key, nonce
 ### payment
 A deposit or a refund as the payments stack knows it, identified by its payment id; the key of a
 deposit.
-
-### deposit gate
-The responsible-gambling check a deposit passes before it is credited: allowed, excluded, cooling
-off, over limit, or unavailable.
-Avoid: RG check
-
-### withdrawal request
-A player's request to withdraw an amount, as the casino's `payouts` service runs it; the key of a
-hold.
-
-### hold preview
-What a withdrawal request would be able to hold: the most withdrawable amount and whether the
-player must confirm.
-
-### transaction
-One recorded change to a wallet: a deposit, a reservation, a release, a trade, a payout, a hold
-step or an adjustment, with its amount, its id and its time.
-
-### adjustment
-An operator's keyed, signed correction to a wallet, with a reason and a kind.
 
 ### actor
 The operator or service recorded as having made a change.
@@ -369,15 +345,6 @@ which holds the casino's payments services.
 
 ### service
 One deployed service of a project, named as the project knows it.
-
-### grant
-A project's permission for a named service of another project to call one of its routes; a route
-not granted refuses the caller.
-Avoid: permission, ACL
-
-### route
-One way a service can be called, with its path and its audience.
-Avoid: endpoint, URL
 
 ### brand
 The slug a route carries that names the product to the payments stack; this product's is

@@ -131,10 +131,10 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 
 **Independent test**: `sbt 'exchangeComponents/testOnly *JournalCompatibilitySuite' 'marketsComponents/testOnly *JournalCompatibilitySuite'`.
 
-- [ ] T040 [US4] Bind `features/libraries/compatibility.feature` in `modules/exchange-components/src/test/scala/.../JournalCompatibilitySuite.scala` and `modules/markets-components/src/test/scala/.../JournalCompatibilitySuite.scala` (R12), and see them fail
-- [ ] T041 [US4] Add a fixture writer in test scope that runs a scripted scenario through the serializers. It writes `manifest<TAB>json` lines and a last `state<TAB>json` line to `modules/<x>-components/src/test/resources/journal/0.0.0/<name>.jsonl`. Write the 0.0.0 fixtures from hand-built event sequences that cover every event case
-- [ ] T042 [US4] Make the suites replay every file of every version directory and compare the value. A `future.v9` manifest line and an unknown `type` line must each fail, naming it, with nothing after them applied (FR-010)
-- [ ] T043 [US4] Confirm V3: the release job can refuse a tag whose fixture directory is missing. Otherwise move the check into a test the job runs. Record the result in research
+- [X] T040 [US4] Bind `features/libraries/compatibility.feature` in `modules/exchange-components/src/test/scala/.../JournalCompatibilitySuite.scala` and `modules/markets-components/src/test/scala/.../JournalCompatibilitySuite.scala` (R12), and see them fail
+- [X] T041 [US4] Add a fixture writer in test scope that runs a scripted scenario through the serializers. It writes `manifest<TAB>json` lines and a last `state<TAB>json` line to `modules/<x>-components/src/test/resources/journal/0.0.0/<name>.jsonl`. Write the 0.0.0 fixtures from hand-built event sequences that cover every event case
+- [X] T042 [US4] Make the suites replay every file of every version directory and compare the value. A `future.v9` manifest line and an unknown `type` line must each fail, naming it, with nothing after them applied (FR-010)
+- [X] T043 [US4] Confirm V3: the release job can refuse a tag whose fixture directory is missing. Otherwise move the check into a test the job runs. Record the result in research
 
 ## Phase 7: User Story 5, publishing by tag (P3)
 
@@ -142,19 +142,19 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 
 **Independent test**: `sbt publishLocal` puts four artefacts under the dynver version. The release job is not run in this feature.
 
-- [ ] T044 [P] [US5] Rewrite `.github/workflows/ci.yml` as ankka-contrib's: `scalafmtCheckAll scalafmtSbtCheck compile test` on pull requests, plus a `features` job that runs `just check` with `uv`
-- [ ] T045 [P] [US5] Write `.github/workflows/release.yml` from ankka-contrib's, minus the image:
+- [X] T044 [P] [US5] Rewrite `.github/workflows/ci.yml` as ankka-contrib's: `scalafmtCheckAll scalafmtSbtCheck compile test` on pull requests, plus a `features` job that runs `just check` with `uv`
+- [X] T045 [P] [US5] Write `.github/workflows/release.yml` from ankka-contrib's, minus the image:
   - on `v*`: a clean-tree check, and an "already on repo1" check against `ankka-predictions-exchange-domain_3/<version>/*.pom`;
   - `sbt ci-release` with `CI_SONATYPE_RELEASE: sonaBundle`, then the Central Portal upload, then the deployment status look;
   - secrets `PGP_SECRET`, `PGP_PASSPHRASE`, `SONATYPE_USERNAME` and `SONATYPE_PASSWORD` by name. Setting them is Trevor's
-- [ ] T046 [US5] Run `sbt publishLocal` and confirm the four artefacts under `~/.ivy2/local/com.thinkmorestupidless/ankka-predictions-*_3/<dynver>/`
+- [X] T046 [US5] Run `sbt publishLocal` and confirm the four artefacts under `~/.ivy2/local/com.thinkmorestupidless/ankka-predictions-*_3/<dynver>/`
 
 ## Phase 8: Polish and cross-cutting
 
-- [ ] T047 Remove `features/money/` and `features/projects/` (spec 004 edge case, D2). ankka-modules spec 022 carries them, merged on 2026-10-31. Remove any glossary terms only they used, until `just check` passes
-- [ ] T048 [P] Rewrite `README.md`: the four libraries, how a consumer pins and constructs them (`contracts/artefacts.md`, "Construction"), how to test, and that the domain rules arrive with specs 005 and 006
-- [ ] T049 [P] Update `CLAUDE.md`'s "Working here", since the template's stub is gone and modules live under `modules/`
-- [ ] T050 Run `sbt scalafmtCheckAll scalafmtSbtCheck test` and `just check`, which must have 0 findings, and every quickstart step but publishing by tag. Fill in research "Found during implementation"
+- [X] T047 Remove `features/money/` and `features/projects/` (spec 004 edge case, D2). ankka-modules spec 022 carries them, merged on 2026-10-31. Remove any glossary terms only they used, until `just check` passes
+- [X] T048 [P] Rewrite `README.md`: the four libraries, how a consumer pins and constructs them (`contracts/artefacts.md`, "Construction"), how to test, and that the domain rules arrive with specs 005 and 006
+- [X] T049 [P] Update `CLAUDE.md`'s "Working here", since the template's stub is gone and modules live under `modules/`
+- [X] T050 Run `sbt scalafmtCheckAll scalafmtSbtCheck test` and `just check`, which must have 0 findings, and every quickstart step but publishing by tag. Fill in research "Found during implementation"
 
 ## Dependencies
 

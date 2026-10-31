@@ -374,6 +374,18 @@ that (`notes/casino-requests.md`, item 9).
   reservation is not asked again. Until spec 005 the exchange refuses every order as not built, so
   "the order is accepted" in T039's patience test is "the order reaches the exchange, which
   refuses it, and the reservation is released under ordinal 0".
+- **2026-10-31, V3.** Holds: the release job's second step lists
+  `modules/<x>-components/src/test/resources/journal/<version>/*.jsonl` for the tag's version in
+  both components modules and refuses the tag, naming the directory, before anything is built.
+  The 0.0.0 fixtures are this feature's (every event case, and a scenario each stub domain runs);
+  the first release writes its own with `JournalFixtureWriter`, which refuses to rewrite a
+  directory that exists.
+- **2026-10-31, the quickstart's V1 check** counted every `<artifactId>ankka-` and so the module's
+  own and `ankka-testkit` (test scope) too; it now shows each with its scope.
+- **2026-10-31, `features/money/` and `features/projects/` are removed**, and the ten glossary
+  terms only they used (reserved money, deposit, deposit gate, withdrawal, withdrawal request, hold
+  preview, transaction, adjustment, grant, route). `reserve` is a term of its own now, and
+  `reservation`, `hold` and `wallet` are reworded not to lean on the removed ones.
 - **2026-10-31, SC-002's entity half** is `ExchangePerfSuite`, skipped with "pending on spec 005"
   while the domain refuses `place`; it runs the day an order can rest.
 
