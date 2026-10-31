@@ -41,6 +41,22 @@ what the buyer is charged, what the seller is paid and what the buyer's order re
 says what it charges; a payout says what it pays. The ledger port of `exchange-components` is
 driven from those events alone, keyed as they say.
 
+## Clarifications
+
+### Session 2026-10-31
+
+- Q: In a two-outcome market, when a buy can match a resting sell of its own outcome or a resting
+  buy of the other, which does the taker get? → A: The better price, its own outcome first when
+  equal, oldest first within either; the same for a sell taker across a resting buy of its own
+  outcome and a resting sell of the other. Spec 003 FR-009's "own outcome first regardless of
+  price" is superseded.
+- Q: May the maximum order cost and the maximum position change on an open exchange? → A: No.
+  They are carried when the exchange opens and stand for its life; an operator who must tighten
+  what players may do uses the consumer's gate port or suspends the market.
+- Q: Do the eight glossary terms this spec proposed (exchange, duration, sequence number, maximum
+  order cost, maximum position, cost, sets outstanding, remainder) stand? → A: Yes, all eight;
+  `exchange` amended to include suspended.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - An order is accepted, refused or cancelled on the value (Priority: P1)
@@ -252,14 +268,13 @@ invariants of FR-010, and every money event carrying its key.
 - A close on an exchange with no resting order: one event, nothing released.
 - A suspend of a suspended exchange, or a resume of an open one: refused naming the state. The
   exchange suspends and resumes with its market (spec 006); driving it is the consumer's.
-- Limits on an open exchange: carried when the exchange opens. [NEEDS CLARIFICATION: whether the
-  maximum order cost and the maximum position may change on an open exchange, by a command of
-  their own, or only when it opens]
+- Limits on an open exchange: carried when the exchange opens and fixed for the exchange's life;
+  no command changes them. An operator who must tighten what players may do uses the consumer's
+  gate port, which refuses an order before it reaches the book, or suspends the market.
 - The two-outcome match takes the better price across a resting sell of the own outcome and a
-  resting buy of the other, own outcome first when equal; spec 003 FR-009 said own outcome
-  first regardless of price. [NEEDS CLARIFICATION: whether a taker may be given a worse price to
-  keep an own-outcome sell ahead of a cross-outcome buy, as spec 003 said, or the better price
-  as this spec says]
+  resting buy of the other, own outcome first when equal; spec 003 FR-009 said own outcome first
+  regardless of price and is superseded. A sell taker is treated the same way across a resting
+  buy of its own outcome and a resting sell of the other.
 
 ## Requirements *(mandatory)*
 
@@ -268,7 +283,7 @@ invariants of FR-010, and every money event carrying its key.
 **The value**
 
 - **FR-001**: The value MUST be the exchange of one market: its outcomes, its unit, its maximum
-  order cost and maximum position, its state (open, suspended, closed, final), one book per
+  order cost and maximum position (carried when it opens and fixed for its life), its state (open, suspended, closed, final), one book per
   outcome, every
   order it has accepted by id with its state (resting, filled in part, filled, cancelled,
   expired), the positions per owner and outcome (quantity, quantity resting under sells, cost),
@@ -319,8 +334,11 @@ invariants of FR-010, and every money event carrying its key.
   the difference to p; a sell of one outcome at p MUST also be matched against resting sells of
   the other at q where p plus q is one unit or less, by merging: the resting order is paid q and
   the taker one unit less q. Across a resting sell of the own outcome and a resting buy of the
-  other, the taker MUST take the better price, the own outcome first when they are equal, and
-  oldest first within either. A trade through the pool MUST set the last price of both outcomes.
+  other (for a buy taker), or a resting buy of the own outcome and a resting sell of the other
+  (for a sell taker), the taker MUST take the better price, the own outcome first when they are
+  equal, and oldest first within either. A trade through the pool MUST set the last price of
+  both outcomes: for the taker's outcome the price the taker pays or is paid, for the other the
+  resting order's price.
 - **FR-012**: A market with more than two outcomes MUST match directly and through explicit
   splits and merges only.
 

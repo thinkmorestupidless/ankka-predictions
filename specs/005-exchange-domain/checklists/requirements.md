@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain (two, in Edge Cases: whether limits may change on an open exchange; whether the two-outcome match takes the better price or keeps the own outcome first as spec 003 said)
+- [x] No [NEEDS CLARIFICATION] markers remain (the two in Edge Cases were settled in the 2026-10-31 clarification session)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -35,4 +35,4 @@
   sourced entity per outcome"); the Context says why.
 - Scenarios marked `changed` existed under spec 003 against the service and now run against the
   value; spec 003 is superseded and no longer checked.
-- The two clarifications are carried to `/speckit-clarify`.
+- The two clarifications were settled by `/speckit-clarify` on 2026-10-31.
