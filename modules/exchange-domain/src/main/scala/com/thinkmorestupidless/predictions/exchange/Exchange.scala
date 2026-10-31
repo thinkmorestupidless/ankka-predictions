@@ -36,6 +36,29 @@ final case class Exchange(
   /** The pool: one unit per set outstanding, and the remainder a void kept (spec 005 FR-015). */
   def pool: Long = setsOutstanding * unit + remainder
 
+  /** The price of the outcome's last trade, if it has traded (FR-020). */
+  def lastPrice(outcome: OutcomeId): Option[Long] = lastPrices.get(outcome)
+
+  /** The highest resting buy price of the outcome. */
+  def bestBid(outcome: OutcomeId): Option[Long] =
+    books.get(outcome).flatMap(_.buys.headOption).map(_.price)
+
+  /** The lowest resting sell price of the outcome. */
+  def bestAsk(outcome: OutcomeId): Option[Long] =
+    books.get(outcome).flatMap(_.sells.headOption).map(_.price)
+
+  /** The quantity resting at each price of the outcome's book: buys, then sells, best first. */
+  def depth(outcome: OutcomeId): (Vector[Level], Vector[Level]) =
+    val book = books.getOrElse(outcome, Book())
+    def levels(resting: Vector[Resting]): Vector[Level] =
+      resting.foldLeft(Vector.empty[Level]) { (acc, r) =>
+        val left = orders.get(r.order).fold(0L)(_.remaining)
+        acc.lastOption match
+          case Some(l) if l.price == r.price => acc.init :+ l.copy(quantity = l.quantity + left)
+          case _                             => acc :+ Level(r.price, left)
+      }
+    (levels(book.buys), levels(book.sells))
+
   private[exchange] def withPosition(owner: OwnerId, outcome: OutcomeId)(
       f: Position => Position
   ): Exchange =
@@ -65,17 +88,21 @@ object Exchange:
   /**
    * A command applied to an exchange: a refusal with no change, or the next value and its events,
    * where the next value is the events replayed onto this one (spec 005 FR-002).
-   *
-   * Spec 004 builds the out-of-order check and `Open`, which the components start from; every other
-   * rule is spec 005's, and until it lands each other command is refused as not built.
    */
   def apply(exchange: Exchange, command: ExchangeCommand): Either[Refusal, Decision] =
     exchange.lastTime.filter(command.at.isBefore) match
       case Some(last) => Left(Refusals.outOfOrder(last, command.at))
       case None =>
         command match
-          case c: ExchangeCommand.Open => open(exchange, c)
-          case other                   => Left(Refusals.notBuilt(other.name))
+          case c: ExchangeCommand.Open     => open(exchange, c)
+          case c: ExchangeCommand.Place    => place(exchange, c)
+          case c: ExchangeCommand.Cancel   => cancel(exchange, c)
+          case c: ExchangeCommand.Split    => split(exchange, c)
+          case c: ExchangeCommand.Merge    => merge(exchange, c)
+          case c: ExchangeCommand.Suspend  => suspend(exchange, c)
+          case c: ExchangeCommand.Resume   => resume(exchange, c)
+          case c: ExchangeCommand.Close    => close(exchange, c)
+          case c: ExchangeCommand.Finalise => finalise(exchange, c)
 
   private def open(exchange: Exchange, c: ExchangeCommand.Open): Either[Refusal, Decision] =
     if exchange.state != ExchangeState.Empty then Left(Refusals.state(exchange.state))
@@ -86,6 +113,175 @@ object Exchange:
           ExchangeEvent.Opened(c.market, c.outcomes, c.unit, c.maxOrderCost, c.maxPosition, c.at)
         )
       )
+
+  /** The answer to a command already applied under its id: the first, with no event. */
+  private def repeated(exchange: Exchange): Either[Refusal, Decision] =
+    Right(Decision(exchange, Vector.empty))
+
+  /**
+   * An order (FR-004 to FR-012). A known id is answered first, so a repeat after the exchange moved
+   * on is still the first answer (research R5); then the state, the fields and the limits; then the
+   * matcher, which may refuse a fill-whole order.
+   */
+  private def place(x: Exchange, c: ExchangeCommand.Place): Either[Refusal, Decision] =
+    x.orders.get(c.order) match
+      case Some(o) =>
+        val same = o.owner == c.owner && o.outcome == c.outcome && o.side == c.side &&
+          o.price == c.price && o.quantity == c.quantity && o.duration == c.duration
+        if same then repeated(x) else Left(Refusals.id(c.order))
+      case None =>
+        val held = x.position(c.owner, c.outcome)
+        val cost = if c.side == Side.Buy then Exchange.cost(c.quantity, c.price) else 0L
+        if x.state != ExchangeState.Open then Left(Refusals.state(x.state))
+        else if !x.outcomes.contains(c.outcome) then Left(Refusals.outcome(c.outcome))
+        else if c.price < 1 || c.price >= x.unit then Left(Refusals.price(c.price))
+        else if c.quantity < 1 then Left(Refusals.quantity(c.quantity.toString))
+        else if c.side == Side.Buy && cost > x.maxOrderCost then
+          Left(Refusals.limit(Refusals.maximumOrderCost))
+        else if c.side == Side.Buy &&
+          held.quantity + held.restingToBuy + c.quantity > x.maxPosition
+        then Left(Refusals.limit(Refusals.maximumPosition))
+        else if c.side == Side.Sell && c.quantity > held.quantity - held.restingUnderSells then
+          Left(Refusals.quantityHeld(held.quantity - held.restingUnderSells))
+        else
+          val placed = ExchangeEvent.OrderPlaced(
+            c.order,
+            c.owner,
+            c.outcome,
+            c.side,
+            c.price,
+            c.quantity,
+            c.duration,
+            cost,
+            x.nextOrder,
+            c.at
+          )
+          Matching
+            .place(replay(x, placed), c.order, c.at)
+            .flatMap(rest => decide(x, placed +: rest))
+
+  /**
+   * A cancel by the order's owner of an order still resting (FR-006); a buy releases what is left.
+   */
+  private def cancel(x: Exchange, c: ExchangeCommand.Cancel): Either[Refusal, Decision] =
+    x.orders.get(c.order) match
+      case None                          => Left(Refusals.id(c.order))
+      case Some(o) if o.owner != c.owner => Left(Refusals.owner(c.owner))
+      case Some(o) if !resting(o)        => Left(Refusals.orderState(o.state))
+      case Some(o) =>
+        val (released, ordinal) = release(o)
+        decide(x, Vector(ExchangeEvent.OrderCancelled(o.id, o.owner, released, ordinal, c.at)))
+
+  /** Whether an order is in its book. */
+  def resting(o: Order): Boolean =
+    o.state == OrderState.Resting || o.state == OrderState.FilledInPart
+
+  /**
+   * What ending an order gives back: a buy's remaining cost under its next ordinal; a sell,
+   * nothing.
+   */
+  private[exchange] def release(o: Order): (Long, Int) =
+    if o.side == Side.Buy && o.remaining > 0 then (o.remaining * o.price, o.releases + 1)
+    else (0L, 0)
+
+  /** A known set key: the same split or merge is the first answer, another is refused (FR-007). */
+  private def known(x: Exchange, key: SetKey, kind: SetKind, owner: OwnerId, sets: Long) =
+    x.setMoves.get(key).map { m =>
+      if m.kind == kind && m.owner == owner && m.sets == sets then repeated(x)
+      else Left(Refusals.key(key))
+    }
+
+  private def split(x: Exchange, c: ExchangeCommand.Split): Either[Refusal, Decision] =
+    known(x, c.key, SetKind.Split, c.owner, c.sets).getOrElse {
+      if x.state != ExchangeState.Open then Left(Refusals.state(x.state))
+      else if c.sets < 1 then Left(Refusals.quantity(c.sets.toString))
+      else if x.outcomes.exists { o =>
+          val p = x.position(c.owner, o)
+          p.quantity + p.restingToBuy + c.sets > x.maxPosition
+        }
+      then Left(Refusals.limit(Refusals.maximumPosition))
+      else
+        decide(
+          x,
+          Vector(ExchangeEvent.SetsSplit(c.key, c.owner, c.sets, c.sets * x.unit, c.at))
+        )
+    }
+
+  private def merge(x: Exchange, c: ExchangeCommand.Merge): Either[Refusal, Decision] =
+    known(x, c.key, SetKind.Merge, c.owner, c.sets).getOrElse {
+      lazy val free = x.outcomes
+        .map { o =>
+          val p = x.position(c.owner, o)
+          p.quantity - p.restingUnderSells
+        }
+        .minOption
+        .getOrElse(0L)
+      if x.state != ExchangeState.Open then Left(Refusals.state(x.state))
+      else if c.sets < 1 then Left(Refusals.quantity(c.sets.toString))
+      else if free < c.sets then Left(Refusals.quantityHeld(free))
+      else
+        decide(
+          x,
+          Vector(ExchangeEvent.SetsMerged(c.key, c.owner, c.sets, c.sets * x.unit, c.at))
+        )
+    }
+
+  private def suspend(x: Exchange, c: ExchangeCommand.Suspend): Either[Refusal, Decision] =
+    if x.state != ExchangeState.Open then Left(Refusals.state(x.state))
+    else decide(x, Vector(ExchangeEvent.Suspended(c.at)))
+
+  private def resume(x: Exchange, c: ExchangeCommand.Resume): Either[Refusal, Decision] =
+    if x.state != ExchangeState.Suspended then Left(Refusals.state(x.state))
+    else decide(x, Vector(ExchangeEvent.Resumed(c.at)))
+
+  /** Every resting order expires, in the books' order, then the exchange is closed (FR-016). */
+  private def close(x: Exchange, c: ExchangeCommand.Close): Either[Refusal, Decision] =
+    x.state match
+      case ExchangeState.Closed                      => repeated(x)
+      case ExchangeState.Empty | ExchangeState.Final => Left(Refusals.state(x.state))
+      case _ =>
+        val expired = for
+          book    <- x.books.values.toVector
+          resting <- book.buys ++ book.sells
+          order   <- x.orders.get(resting.order).toVector
+        yield
+          val (released, ordinal) = release(order)
+          ExchangeEvent.OrderExpired(order.id, order.owner, released, ordinal, c.at)
+        decide(x, expired :+ ExchangeEvent.Closed(c.at))
+
+  /**
+   * Every position with shares is paid once, a losing one nothing (research R6); a void keeps what
+   * one unit does not divide into equal parts (FR-017, research R7).
+   */
+  private def finalise(x: Exchange, c: ExchangeCommand.Finalise): Either[Refusal, Decision] =
+    x.state match
+      case ExchangeState.Final if x.finality.contains(c.finality) => repeated(x)
+      case ExchangeState.Closed =>
+        c.finality match
+          case Finality.Resolved(o) if !x.outcomes.contains(o) => Left(Refusals.outcome(o))
+          case finality =>
+            val part = if x.outcomes.isEmpty then 0L else x.unit / x.outcomes.size
+            val paid = for
+              (owner, held)  <- x.positions.toVector
+              (outcome, pos) <- held.toVector if pos.quantity > 0
+            yield
+              val amount = finality match
+                case Finality.Resolved(won) => if outcome == won then pos.quantity * x.unit else 0L
+                case Finality.Void          => pos.quantity * part
+              ExchangeEvent.PositionPaid(
+                PositionKey.of(owner, outcome),
+                owner,
+                outcome,
+                pos.quantity,
+                amount,
+                c.at
+              )
+            val left = finality match
+              case Finality.Void => x.setsOutstanding * (x.unit - part * x.outcomes.size)
+              case _             => 0L
+            val kept = Option.when(left > 0)(ExchangeEvent.RemainderKept(left, c.at)).toVector
+            decide(x, paid ++ kept :+ ExchangeEvent.Final(finality, c.at))
+      case _ => Left(Refusals.state(x.state))
 
   private def decide(exchange: Exchange, events: Vector[ExchangeEvent]): Either[Refusal, Decision] =
     Right(Decision(events.foldLeft(exchange)(replay), events))

@@ -125,7 +125,11 @@ object Book:
    * order and a place on a full one must not sort it again (spec 005 SC-003, research R2). `better`
    * says one price goes before another; within a price the older order goes first.
    */
-  private def insert(v: Vector[Resting], r: Resting, better: (Resting, Resting) => Boolean): Vector[Resting] =
+  private def insert(
+      v: Vector[Resting],
+      r: Resting,
+      better: (Resting, Resting) => Boolean
+  ): Vector[Resting] =
     def before(x: Resting): Boolean =
       better(r, x) || (r.price == x.price && r.sequence < x.sequence)
     @scala.annotation.tailrec
