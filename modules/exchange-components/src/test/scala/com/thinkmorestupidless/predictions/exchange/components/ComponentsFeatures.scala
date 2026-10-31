@@ -17,16 +17,14 @@ import scala.concurrent.duration.DurationInt
 
 /**
  * The exchange's scenarios of `features/libraries/components.feature`, on a real service with a
- * throwaway Postgres and scripted ports (research R11). The trade waits on spec 005's matching; the
- * resolution port's scenario is the markets components' suite's.
+ * throwaway Postgres and scripted ports (research R11). The resolution port's scenario is the
+ * markets components' suite's.
  */
 class ComponentsFeatures extends GherkinSuite("features/libraries/components.feature"):
 
   override val munitTimeout = 5.minutes
 
   override protected def ranElsewhere: Map[String, String] = Map(
-    "a trade is settled through the ledger keyed by the trade, and a repeat is answered as the first was" ->
-      "spec 005, when matching is built",
     "a resolution the resolution port refuses changes nothing" -> "markets' ComponentsFeatures"
   )
 
@@ -120,6 +118,56 @@ class ComponentsFeatures extends GherkinSuite("features/libraries/components.fea
         .thenAwaitEnd(30.seconds)
         .invoke(request)
       outcome = Some(ended.outcome)
+  }
+
+  Given("{string} holds {string} shares of {string} in {string}") {
+    (owner: String, shares: String, _: String, name: String) =>
+      // A split gives a share of every outcome, and is how a holding comes about with the pool exact.
+      exchange(market(name))
+        .call(ExchangeEntity.split)
+        .invoke(
+          ExchangeCommand
+            .Split(SetKey(s"seed-$owner"), OwnerId(owner), shares.toLong, Instant.now())
+        ): Unit
+  }
+
+  Given(
+    "a resting sell order by {string} for {string} shares of {string} in {string} at price {string}"
+  ) { (owner: String, quantity: String, outcomeName: String, name: String, price: String) =>
+    exchange(market(name))
+      .call(ExchangeEntity.place)
+      .invoke(
+        ExchangeCommand.Place(
+          OrderId(s"sell-$owner"),
+          OwnerId(owner),
+          OutcomeId(outcomeName),
+          Side.Sell,
+          price.toLong,
+          quantity.toLong,
+          OrderDuration.RestUntilClose,
+          Instant.now()
+        )
+      ): Unit
+  }
+
+  private def settled(trade: String): Vector[LedgerCall] =
+    ledger.calls("settle").filter(c => c.market == market("m-1") && c.key == trade)
+
+  Then("the ledger port is asked to settle the trade {string} keyed by {string}") {
+    (trade: String, key: String) =>
+      assertEquals(trade, key)
+      val calls =
+        kit.eventually(s"$trade settled", 30.seconds)(Option(settled(trade)).filter(_.nonEmpty))
+      assertEquals(calls.map(c => (c.amount, c.answer)), Vector((600L, Right(LedgerAnswer.Done))))
+  }
+
+  Then(
+    "asking the ledger port to settle the trade {string} keyed by {string} again is answered as the first was"
+  ) { (trade: String, _: String) =>
+    val first = settled(trade).head
+    val again = ledger.settle(market("m-1"), TradeId(trade), Through.Direct, Vector.empty)
+    assertEquals(Right(again), first.answer)
+    assertEquals(settled(trade).size, 2)
   }
 
   Then("the order is refused as insufficient") { () =>

@@ -11,9 +11,6 @@ import scala.collection.immutable.SortedMap
  */
 final case class Prices(prices: SortedMap[OutcomeId, Long], sequence: Long)
 
-/** The quantity resting at one price. */
-final case class Level(price: Long, quantity: Long)
-
 /** One outcome's book by price, best first on each side, current to `sequence`. */
 final case class Depth(
     outcome: OutcomeId,
@@ -31,18 +28,10 @@ object Prices:
 object Depth:
   given Serializer[Depth] = Codecs.serializer[Depth]("exchange-depth")
 
-  /** The levels of `exchange`'s book of `outcome`, from the remaining quantity of each order. */
+  /** The levels of `exchange`'s book of `outcome` (the domain's `depth`), current to `sequence`. */
   def of(exchange: Exchange, outcome: OutcomeId, sequence: Long): Depth =
-    val book = exchange.books.getOrElse(outcome, Book())
-    def levels(resting: Vector[Resting]): Vector[Level] =
-      resting
-        .foldLeft(Vector.empty[Level]) { (acc, r) =>
-          val left = exchange.orders.get(r.order).fold(0L)(_.remaining)
-          acc.lastOption match
-            case Some(l) if l.price == r.price => acc.init :+ l.copy(quantity = l.quantity + left)
-            case _                             => acc :+ Level(r.price, left)
-        }
-    Depth(outcome, levels(book.buys), levels(book.sells), sequence)
+    val (buys, sells) = exchange.depth(outcome)
+    Depth(outcome, buys, sells, sequence)
 
 object Holdings:
   given Serializer[Holdings] = Codecs.serializer[Holdings]("exchange-holdings")

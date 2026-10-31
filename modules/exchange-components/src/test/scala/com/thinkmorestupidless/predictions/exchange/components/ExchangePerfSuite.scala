@@ -10,8 +10,8 @@ import scala.concurrent.duration.DurationInt
 
 /**
  * Spec 004 SC-002's entity half: `place` through the entity on an exchange of 10,000 resting orders
- * takes 10 ms at the median on a laptop. It needs an order to rest, which is spec 005's; until then
- * the domain refuses `place` as not built and the test is skipped, saying so.
+ * takes 10 ms at the median on a laptop. The domain's own half is spec 005 SC-003's, held by the
+ * domain module's `ExchangePerfSuite`.
  */
 class ExchangePerfSuite extends munit.FunSuite:
 
@@ -55,13 +55,8 @@ class ExchangePerfSuite extends munit.FunSuite:
           Instant.now()
         )
       ): Unit
-    val built =
-      try { exchange.call(ExchangeEntity.place).invoke(order(0, Side.Buy, 10)): Unit; true }
-      catch case Refused(r) if r == Refusals.notBuilt("place") => false
-    assume(built, "pending on spec 005: the domain cannot rest an order yet")
-
     // Buys from 10 to 49, never meeting a sell, so every one rests.
-    (1 until 10_000).foreach(n =>
+    (0 until 10_000).foreach(n =>
       exchange.call(ExchangeEntity.place).invoke(order(n, Side.Buy, 10 + n % 40))
     )
     val times = (10_000 until 10_200).map { n =>

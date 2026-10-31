@@ -8,9 +8,11 @@ predictions module) composes them with its own money, players and rules behind t
 specs are under `specs/` (`CLAUDE.md` lists them), their scenarios in `features/`, their words in
 `GLOSSARY.md`. `just check` holds the three together.
 
-The domain rules arrive with specs 005 (the exchange) and 006 (the markets). Until then each
-domain opens (an exchange; a market drafted and approved) and refuses every other command as not
-built, and the scenarios that need a rule are reported ignored, naming the spec that lifts them.
+The exchange's rules are in (spec 005): placing, matching through the book and the pool,
+cancelling, splitting and merging, suspending, closing and finalising, with the limits fixed when
+it opens. The markets' rules arrive with spec 006: until then a market is drafted and approved and
+refuses every other command as not built, and the scenarios that need a rule are reported
+ignored, naming that spec.
 
 ## The libraries
 

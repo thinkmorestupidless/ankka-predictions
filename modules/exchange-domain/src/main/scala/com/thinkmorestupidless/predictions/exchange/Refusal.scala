@@ -20,8 +20,17 @@ object Refusals:
   def state(state: ExchangeState): Refusal =
     Refusal("state", Map("state" -> ExchangeState.word(state)))
 
-  def price(price: Long): Refusal       = Refusal("price", Map("price" -> price.toString))
-  def quantity(quantity: Long): Refusal = Refusal("quantity", Map("quantity" -> quantity.toString))
+  /** An order that is not resting, by its own state. */
+  def orderState(state: OrderState): Refusal =
+    Refusal("state", Map("state" -> OrderState.word(state)))
+
+  val maximumOrderCost = "maximum order cost"
+  val maximumPosition  = "maximum position"
+
+  def price(price: Long): Refusal = Refusal("price", Map("price" -> price.toString))
+
+  /** The quantity as it was given, which may not have been a number. */
+  def quantity(quantity: String): Refusal  = Refusal("quantity", Map("quantity" -> quantity))
   def outcome(outcome: OutcomeId): Refusal = Refusal("outcome", Map("outcome" -> outcome.value))
   def limit(name: String): Refusal         = Refusal("limit", Map("limit" -> name))
   def owner(owner: OwnerId): Refusal       = Refusal("owner", Map("owner" -> owner.value))
@@ -29,9 +38,6 @@ object Refusals:
   def key(key: SetKey): Refusal            = Refusal("key", Map("key" -> key.value))
   def quantityHeld(held: Long): Refusal    = Refusal("quantity held", Map("held" -> held.toString))
   val notFillableWhole: Refusal            = Refusal("not fillable whole")
-
-  /** A rule spec 005 has not yet built; the stub's answer to every such command. */
-  def notBuilt(command: String): Refusal = Refusal("not built", Map("command" -> command))
 
   /** The ledger did not answer within the consumer's patience (research R8). */
   val ledgerUnavailable: Refusal = Refusal("ledger unavailable")

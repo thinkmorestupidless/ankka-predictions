@@ -188,36 +188,36 @@ A whole number of minor units that one share trades at, from one to one less tha
 Avoid: odds, probability (in a trading step)
 
 ### exchange
-*Proposed.* The value of one market's trading: a book per outcome, every order by id, the
+The value of one market's trading: a book per outcome, every order by id, the
 positions, the sets outstanding and the remainder, the last price of each outcome, the sequence
-number and the last time; open, closed or final.
+number and the last time; open, suspended, closed or final.
 
 ### duration
-*Proposed.* How long an order may rest: until the market closes (the default), fill what can be
+How long an order may rest: until the market closes (the default), fill what can be
 filled at once and cancel the rest, or fill whole at once or not at all.
 
 ### sequence number
-*Proposed.* The number an exchange gives each trade in turn, from one, by which the order of
+The number an exchange gives each trade in turn, from one, by which the order of
 trades is fixed.
 
 ### maximum order cost
-*Proposed.* The most a buy order may cost on an exchange; carried when the exchange opens.
+The most a buy order may cost on an exchange; carried when the exchange opens.
 
 ### maximum position
-*Proposed.* The most shares of one outcome a player may hold and have resting to buy on an
+The most shares of one outcome a player may hold and have resting to buy on an
 exchange; carried when the exchange opens.
 
 ### cost
-*Proposed.* Of a buy order, quantity times price; of a position, what its shares cost: a buy adds
+Of a buy order, quantity times price; of a position, what its shares cost: a buy adds
 quantity times the trade's price, a split adds an equal part of the unit per share rounded down,
 and a sale removes the sold shares' part rounded down.
 
 ### sets outstanding
-*Proposed.* The complete sets an exchange has split and not merged or paid; the total of shares
+The complete sets an exchange has split and not merged or paid; the total of shares
 held of every outcome, which is the same for each.
 
 ### remainder
-*Proposed.* What a void leaves in the pool when one unit does not divide equally among the
+What a void leaves in the pool when one unit does not divide equally among the
 outcomes; kept and recorded, never paid.
 
 ### order

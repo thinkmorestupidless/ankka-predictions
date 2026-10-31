@@ -41,7 +41,12 @@ lazy val exchangeDomain = project
   .settings(common)
   .settings(
     name := "ankka-predictions-exchange-domain",
-    libraryDependencies ++= Seq(ankkaCore, munitScalacheck % Test)
+    libraryDependencies ++= Seq(ankkaCore, munitScalacheck % Test),
+    // The property suite's count (spec 005 SC-002), passed to the forked test JVM.
+    Test / javaOptions ++= sys.props
+      .get("predictions.sequences")
+      .map(n => s"-Dpredictions.sequences=$n")
+      .toSeq
   )
 
 lazy val marketsDomain = project
