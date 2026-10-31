@@ -112,14 +112,43 @@ final case class Resting(order: OrderId, price: Long, sequence: Long)
 final case class Book(buys: Vector[Resting] = Vector.empty, sells: Vector[Resting] = Vector.empty):
 
   def rest(side: Side, r: Resting): Book = side match
-    case Side.Buy  => copy(buys = (buys :+ r).sortBy(x => (-x.price, x.sequence)))
-    case Side.Sell => copy(sells = (sells :+ r).sortBy(x => (x.price, x.sequence)))
+    case Side.Buy  => copy(buys = Book.insert(buys, r, (a, b) => a.price > b.price))
+    case Side.Sell => copy(sells = Book.insert(sells, r, (a, b) => a.price < b.price))
 
   def remove(order: OrderId): Book =
     copy(buys = buys.filterNot(_.order == order), sells = sells.filterNot(_.order == order))
 
-/** An owner's holding in one outcome. */
-final case class Position(quantity: Long = 0, restingUnderSells: Long = 0, cost: Long = 0)
+object Book:
+
+  /**
+   * `r` placed after every order it does not go before: by binary search, since a book is kept in
+   * order and a place on a full one must not sort it again (spec 005 SC-003, research R2). `better`
+   * says one price goes before another; within a price the older order goes first.
+   */
+  private def insert(v: Vector[Resting], r: Resting, better: (Resting, Resting) => Boolean): Vector[Resting] =
+    def before(x: Resting): Boolean =
+      better(r, x) || (r.price == x.price && r.sequence < x.sequence)
+    @scala.annotation.tailrec
+    def search(lo: Int, hi: Int): Int =
+      if lo >= hi then lo
+      else
+        val mid = (lo + hi) >>> 1
+        if before(v(mid)) then search(lo, mid) else search(mid + 1, hi)
+    v.patch(search(0, v.size), Vector(r), 0)
+
+/** The quantity resting at one price. */
+final case class Level(price: Long, quantity: Long)
+
+/**
+ * An owner's holding in one outcome: the shares held, those offered under resting sells, what the
+ * held shares cost, and the shares on order under resting buys, which the maximum position counts.
+ */
+final case class Position(
+    quantity: Long = 0,
+    restingUnderSells: Long = 0,
+    cost: Long = 0,
+    restingToBuy: Long = 0
+)
 
 enum SetKind:
   case Split, Merge
