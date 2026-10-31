@@ -38,3 +38,10 @@ product needs them. An answer is a change to a casino spec, or a reason it is no
    keeps a market's category and currency as text; spec 002 FR-011 (an operator setting for the
    categories, a category in use never removed) and the check that a currency is one the brand
    offers are the predictions module's (ankka-modules spec 023), which does not yet state them.
+9. **A trade through the pool, charged from reservations.** In a two-outcome market two buys of
+   opposite outcomes trade by splitting a set between them (spec 005 FR-011 here): each buyer's
+   charge leaves its reservation for the order and enters the market's pool, and each releases
+   what its price did not use. ankka-modules spec 022's split debits available money, not a
+   reservation, and its settlement runs from a buyer to a seller. Needed: a split, or a
+   settlement, that charges an order's reservation into the pool under the trade's key, one per
+   leg. The merge side (two sells paid from the pool) is spec 022's payment as it stands.

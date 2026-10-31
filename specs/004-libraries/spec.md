@@ -157,8 +157,9 @@ under that version and nowhere else.
   keeps a last time and never goes backwards.
 - A ledger port that fails rather than refuses (unreachable): the component retries the keyed call
   and the order stays pending, neither resting nor refused, until the port answers; the consumer
-  sees the pending state. [NEEDS CLARIFICATION: how long an order may stay pending before it is
-  refused as "ledger unavailable", and whether that is the library's rule or the consumer's]
+  sees the pending state. *Resolved (research R8): the component retries within a patience the
+  consumer sets, with no default in the library, then refuses the order as "ledger unavailable";
+  no pending state is persisted.*
 - An event whose manifest the current release does not know: replay fails loudly naming the
   manifest; it is never skipped.
 - Spec 001's features (`features/money/`, `features/projects/`): they describe the wallet and the

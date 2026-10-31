@@ -343,9 +343,11 @@ invariants of FR-010, and every money event carrying its key.
 **Events and money**
 
 - **FR-018**: Every event that moves money MUST name the amount, the owner and what it is keyed
-  by: a reservation or a release by the order id, a trade's charge and payment by the trade (and
-  the buyer's release by the order), a split or a merge by its key, a payout by the market and
-  the position; so that a ledger can be driven from the events alone.
+  by: a reservation by the order id, a release by the order id and its ordinal for that order
+  (from one, since one order can release more than once), a trade's legs by the trade, each leg
+  naming its order, charge, payment and release and the trade naming how it was made (direct,
+  split, merge), a split or a merge by its key, a payout by the market and the position; so that
+  a ledger can be driven from the events alone (spec 004 research R14).
 - **FR-019**: The events MUST be at least: opened, order placed, trade made, order filled, order
   cancelled, order expired, sets split, sets merged, closed, position paid, remainder kept, final;
   and MUST evolve as spec 004 FR-009 says.
