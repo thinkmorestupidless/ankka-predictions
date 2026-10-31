@@ -39,7 +39,8 @@ version, and the ports are the seam between them.
 
 ### User Story 1 - The exchange domain is a value and its events (Priority: P1)
 
-A developer takes the `exchange-domain` library and holds a book of one outcome as a value. They
+A developer takes the `exchange-domain` library and holds one market's exchange as a value: every
+outcome's book, the positions and the pool, in one value (constitution II). They
 apply a command (place, cancel, expire, split, merge, close, resolve) and receive either a refusal
 that names its reason or the next book and the events that led to it. They apply those events to
 an empty book and get the same book back. Nothing in the library reads a clock, a wallet, a player
@@ -89,8 +90,9 @@ stands as written and runs against the value alone.
 ### User Story 3 - Components with ports (Priority: P2)
 
 A consumer takes `exchange-components` and `markets-components`: one event sourced entity per
-outcome book, one per market, the position and catalogue views, the timers for open, close and
-expiry, written against the domains. The outside world is behind three ports the consumer
+market's exchange, one per market, a placement workflow per order that secures the money before
+the order reaches the exchange, the position and catalogue views, the timers for the market's
+open, close and finalise and the exchange's close, written against the domains. The outside world is behind three ports the consumer
 supplies: a ledger port (reserve, release, settle, pay, each keyed), a gate port (may this
 player place this order, answering a refusal with its reason), and a resolution port (who may
 resolve and void). The consumer registers the components explicitly in its own service and
@@ -157,8 +159,9 @@ under that version and nowhere else.
   keeps a last time and never goes backwards.
 - A ledger port that fails rather than refuses (unreachable): the component retries the keyed call
   and the order stays pending, neither resting nor refused, until the port answers; the consumer
-  sees the pending state. [NEEDS CLARIFICATION: how long an order may stay pending before it is
-  refused as "ledger unavailable", and whether that is the library's rule or the consumer's]
+  sees the pending state. *Resolved (research R8): the component retries within a patience the
+  consumer sets, with no default in the library, then refuses the order as "ledger unavailable";
+  no pending state is persisted.*
 - An event whose manifest the current release does not know: replay fails loudly naming the
   manifest; it is never skipped.
 - Spec 001's features (`features/money/`, `features/projects/`): they describe the wallet and the
@@ -169,24 +172,29 @@ under that version and nowhere else.
 
 ### Functional Requirements
 
-- **FR-001**: `exchange-domain` MUST model a book of one outcome as a value, with commands that
+- **FR-001**: `exchange-domain` MUST model one market's exchange, every outcome's book with the
+  positions and the pool, as a value, with commands that
   yield a refusal naming its reason or the next value and its events, and events that replay onto
   a value; replaying a value's events onto an empty value MUST yield an equal value.
-- **FR-002**: `markets-domain` MUST model a market the same way, over the lifecycle of spec 002.
+- **FR-002**: `markets-domain` MUST model a market the same way, over the lifecycle of spec 006.
 - **FR-003**: Neither domain library MAY read a clock, a wallet, a player, a database or a
   network; a time a rule needs is carried by the command. Each MUST depend on `ankka-core` alone.
-- **FR-004**: The domains MUST keep every rule specs 002 and 003 state as a domain rule: matching
-  (FR-006 to FR-009 of spec 003), positions, complete sets and the pool invariant (FR-010 to
-  FR-012), settlement arithmetic including void, and the market lifecycle and resolution rules.
-- **FR-005**: `exchange-components` and `markets-components` MUST supply the entities, views and
-  timers of specs 002 and 003 written against the domains, with the outside world behind a ledger
-  port, a gate port and a resolution port the consumer implements.
+- **FR-004**: The domains MUST keep every rule specs 005 and 006 state: matching, positions,
+  complete sets and the pool invariant, suspension, settlement arithmetic including void (spec
+  005), and the market lifecycle, suspension and resolution rules (spec 006).
+- **FR-005**: `exchange-components` and `markets-components` MUST supply the entities, the
+  placement workflow, the views and the timers the plan names, written against the domains, with
+  the outside world behind a ledger port, a gate port and a resolution port the consumer
+  implements. The exchange entity MUST never call a port: money is secured by the workflow before
+  the order reaches it, so the book never waits on the ledger (constitution II).
 - **FR-006**: The components MUST register nothing by themselves; the consumer registers each
   explicitly.
 - **FR-007**: A ledger port refusal MUST leave the book unchanged and the order resting nowhere; a
   gate port refusal MUST reserve nothing and carry the gate's reason to the caller.
-- **FR-008**: Every ledger port call MUST be keyed (order id, trade id, market id and position) so
-  that a repeat is answered as the first was, and settlement MUST be at least once.
+- **FR-008**: Every ledger port call MUST be keyed (a reservation by the order id, a release by
+  the order id and its ordinal for that order, a trade by the trade id with its legs, a split or
+  a merge by its key, a payout by the market and position) so that a repeat is answered as the
+  first was, and settlement MUST be at least once.
 - **FR-009**: The libraries MUST own their events, wire names and manifests, and every release
   MUST keep a journal written by an earlier release replaying to equal values; a release that
   cannot MUST be a new major version with a named migration.
@@ -205,10 +213,12 @@ under that version and nowhere else.
 
 ### Key Entities
 
-- **Book**: the value of one outcome's book: resting orders by price and time, positions, the
-  pool, the last time.
+- **Exchange**: the value of one market's trading: a book per outcome of resting orders by price
+  and time, the positions, the pool, the last time.
 - **Market**: the value of one market: its definition, state, outcomes, times, resolution.
-- **Ledger port**: reserve, release, settle, pay; keyed; answers done, insufficient, or a refusal.
+- **Ledger port**: reserve, release, settle (a trade's legs, direct or through the pool), charge
+  and pay (explicit splits and merges), payout; every call keyed and naming the market; answers
+  done, insufficient, or a refusal.
 - **Gate port**: may this player place this order; answers allow or a refusal with its reason.
 - **Resolution port**: may this caller resolve or void this market.
 
@@ -223,7 +233,8 @@ under that version and nowhere else.
 - **SC-003**: A fixture journal from every released version replays on the current release in CI,
   on every release.
 - **SC-004**: eitheror's predictions module adds no matching, position, settlement or lifecycle
-  rule of its own: its code is endpoints, facts, the mirror and the three ports.
+  rule of its own: its code is endpoints, facts, the mirror and the three ports. *Checked in
+  ankka-modules spec 023's review, not here.*
 
 ## Assumptions
 

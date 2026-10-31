@@ -1,21 +1,31 @@
-# Build and test on every push and pull request. Needs no secrets, so it is green from the first
-# push — before anything about a control plane has been configured.
+# Format, build and test on every pull request, as ankka-contrib does; the suites start a throwaway
+# Postgres through testcontainers, which a GitHub-hosted runner can do. The features job checks the
+# living features, the glossary and the specs that name them.
 name: ci
+
 on:
-  push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-java@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: 21
           cache: sbt
       - uses: sbt/setup-sbt@v1
-      # The integration tests start a throwaway Postgres through testcontainers, which a
-      # GitHub-hosted runner can do: Docker is already there.
-      - run: sbt test
+      - run: sbt scalafmtCheckAll scalafmtSbtCheck compile test
+
+  features:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v6
+      - uses: extractions/setup-just@v3
+      - run: just check

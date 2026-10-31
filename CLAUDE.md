@@ -32,7 +32,8 @@ from the parent directory's `CLAUDE.md`; this file adds what is specific to this
 - ankka-reasoning: `../ankka-reasoning`, pinned at 0.2.0 (to be cut from `main`). Its
   `docs/reference/http-api.md` is the contract; its market layer is what `markets` and `exchange`
   write.
-- ankka: `../ankka`, pinned in `build.sbt`. Its `CLAUDE.md` rules hold here: handlers return
+- ankka: `../ankka`, pinned at 0.14.2 in `project/Dependencies.scala` (`-Dankka.version=` for a
+  locally published one). Its `CLAUDE.md` rules hold here: handlers return
   effects, wire names are protocol, registration is explicit, events evolve additively, every
   endpoint declares an ACL.
 
@@ -43,7 +44,7 @@ from the parent directory's `CLAUDE.md`; this file adds what is specific to this
 | 001 | superseded | projects and the ledger: eitheror's now, ankka-modules specs 021 and 022 |
 | 002 | superseded | the `markets` service: the lifecycle restated in 006; the catalogue, facts and mirror are eitheror's (ankka-modules 023) |
 | 003 | superseded | the `exchange` service: the book restated in 005; the gates, reservation, facts and stream are eitheror's (ankka-modules 022, 023) |
-| 004 | draft | the libraries: the split, the ports, the journal as a contract, publishing by tag |
+| 004 | building | the libraries: the split, the ports, the journal as a contract, publishing by tag |
 | 005 | draft | the exchange domain: the value of one market's trading, its commands, events and rules |
 | 006 | draft | the markets domain: the value of one market from draft to final, its commands and events |
 
@@ -56,10 +57,16 @@ numbered here.
 
 - Spec-kit with the bdd extension: `/speckit-specify` writes a spec, `/speckit-bdd-features` moves
   its scenarios into `features/`, `just check` runs the checker (needs `uv`).
-- One sbt build; services under `modules/<name>/`, the pure domains under `modules/<name>-domain/`
-  depending on `ankka-core` alone (as voice does). The template's `Item` stub at the root is the
-  shape to copy and then remove.
-- Build with the `ankka@ankka` skills; check a running service with `ankka-inspect`.
+- One sbt build of four published libraries under `modules/`: `exchange-domain` and
+  `markets-domain` on `ankka-core` alone, `exchange-components` and `markets-components` on their
+  domain and `ankka-sdk`. Nothing here runs as a service and nothing registers a component; the
+  components' suites are the example consumer, on `AnkkaTestKit` with scripted ports (Docker).
+- The journal is a contract (`specs/004-libraries/contracts/artefacts.md`): a manifest, an event
+  case, a component id or a wire name never changes, and a field is only added with a default.
+  Each release's fixtures under `modules/*-components/src/test/resources/journal/<version>/` are
+  written once by the module's `JournalFixtureWriter` and replayed by every later release.
+- `sbt test`, `just check`, `just fmt`; only a `v*` tag publishes (`.github/workflows/release.yml`).
+- Build with the `ankka@ankka` skills.
 - Scala by default; British spelling; money in minor units as `Long`; every money command keyed.
 - Conventions of the family (`../ankka-brain/conventions.md`): scalafmt hook, serialised tests,
   thin Justfile, only a tag publishes, docs pages tell no history.
@@ -67,6 +74,12 @@ numbered here.
 ## Traps
 
 Written the day they cost time; newest first.
+
+- 2026-10-31: ankka 0.14.2 drops a `CommandError`'s details between components (only the message
+  and code cross), so a refusal travels as JSON in the message (`Refused`). An entity's context has
+  no timer scheduler; the markets' timer is set by the `market-schedule` consumer with the
+  scheduler the consumer hands in (`MarketPorts.timers`).
+- 2026-10-31: macOS has no `timeout`; a command wrapped in it runs nothing and prints nothing.
 
 - 2026-10-20: `ankka init` refuses a directory that is not empty. To make an existing directory a
   project's root, scaffold it beside and merge the tree in; nothing in the scaffold collides with

@@ -1,0 +1,99 @@
+# A tag `v*` publishes the four libraries to Maven Central (research R13), as ankka-contrib's
+# release does, with no image: a library repository runs nowhere. Only a tag publishes anything;
+# the version is the tag's, through sbt-dynver, so the tree must be clean.
+#
+# The secrets are the family's: PGP_SECRET and PGP_PASSPHRASE are the release key, whose public
+# half must be on a key server the portal reads (keyserver.ubuntu.com); SONATYPE_USERNAME and
+# SONATYPE_PASSWORD are a portal user token for the com.thinkmorestupidless namespace. Setting them
+# on this repository is Trevor's.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: sbt
+      - uses: sbt/setup-sbt@v1
+      - run: git update-index --refresh && git diff --quiet || (echo "dirty tree" && exit 1)
+      # A release keeps a journal for every later release to replay (spec 004 FR-010, research
+      # R12): a tag whose fixtures are not committed is refused before anything is built.
+      - name: The release's journal fixtures are committed
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for module in exchange-components markets-components; do
+            dir="modules/$module/src/test/resources/journal/$version"
+            if ! ls "$dir"/*.jsonl > /dev/null 2>&1; then
+              echo "::error::$dir holds no fixture: write it with the module's JournalFixtureWriter and commit it before tagging"
+              exit 1
+            fi
+          done
+      # As ankka's release: `ci-release` stops at sbt's `sonaBundle`, which zips the signed staging
+      # directory, and the next step uploads that zip through the Central Portal's API, which
+      # publishes it on its own; repo1 follows in minutes to an hour. A version already on repo1 is
+      # not uploaded again, so a re-run of the tag finishes a cut-off release.
+      - name: Is this version already on Maven Central?
+        id: central
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          url="https://repo1.maven.org/maven2/com/thinkmorestupidless/ankka-predictions-exchange-domain_3/$version/ankka-predictions-exchange-domain_3-$version.pom"
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)
+          echo "$url -> $code"
+          if [ "$code" = "200" ]; then
+            echo "::notice::$version is already on Maven Central; not uploading it again"
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+      - run: sbt ci-release
+        if: steps.central.outputs.published != 'true'
+        env:
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          CI_SONATYPE_RELEASE: sonaBundle
+      - name: Upload the bundle to the Central Portal, to be published automatically
+        if: steps.central.outputs.published != 'true'
+        env:
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+        run: |
+          if [ -z "$SONATYPE_USERNAME" ] || [ -z "$SONATYPE_PASSWORD" ]; then
+            echo "::error::SONATYPE_USERNAME and SONATYPE_PASSWORD are not set on the repository; set them and re-run this job"
+            exit 1
+          fi
+          bundle=$(find . -path '*/sona-bundle/bundle.zip' -type f | head -1)
+          if [ -z "$bundle" ]; then echo "::error::sonaBundle wrote no bundle.zip"; exit 1; fi
+          echo "bundle: $bundle ($(du -h "$bundle" | cut -f1))"
+          version="${GITHUB_REF_NAME#v}"
+          token=$(printf '%s:%s' "$SONATYPE_USERNAME" "$SONATYPE_PASSWORD" | base64 | tr -d '\n')
+          code=$(curl -sS -o upload.out -w '%{http_code}' \
+            -H "Authorization: Bearer $token" \
+            -F "bundle=@$bundle" \
+            "https://central.sonatype.com/api/v1/publisher/upload?publishingType=AUTOMATIC&name=ankka-predictions-$version" || true)
+          echo "portal answered $code: $(cat upload.out)"
+          [ "$code" = "201" ] || exit 1
+          deployment=$(cat upload.out)
+          echo "::notice::$version uploaded as deployment $deployment; the portal publishes it and repo1 follows in minutes to an hour"
+          # A 201 is the upload, not the release: the portal validates afterwards, and a failure
+          # there is otherwise visible only on https://central.sonatype.com/publishing/deployments.
+          # One look, not a wait, for the log.
+          sleep 20
+          curl -sS -o status.out -w '%{http_code}\n' -H "Authorization: Bearer $token" -X POST \
+            "https://central.sonatype.com/api/v1/publisher/status?id=$deployment" || true
+          cat status.out; echo
+          if grep -q '"deploymentState" *: *"FAILED"' status.out; then
+            echo "::error::the portal rejected deployment $deployment; its errors are above"
+            exit 1
+          fi
