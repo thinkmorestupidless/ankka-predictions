@@ -21,7 +21,8 @@ object Refusals:
     Refusal("state", Map("state" -> ExchangeState.word(state)))
 
   def price(price: Long): Refusal       = Refusal("price", Map("price" -> price.toString))
-  def quantity(quantity: Long): Refusal = Refusal("quantity", Map("quantity" -> quantity.toString))
+  /** The quantity as it was given, which may not have been a number. */
+  def quantity(quantity: String): Refusal = Refusal("quantity", Map("quantity" -> quantity))
   def outcome(outcome: OutcomeId): Refusal = Refusal("outcome", Map("outcome" -> outcome.value))
   def limit(name: String): Refusal         = Refusal("limit", Map("limit" -> name))
   def owner(owner: OwnerId): Refusal       = Refusal("owner", Map("owner" -> owner.value))
