@@ -88,7 +88,7 @@ Paths: `MK` = `modules/markets-domain/src/main/scala/com/thinkmorestupidless/pre
 
 ## Phase 9: Polish
 
-- [ ] T023 [P] Update `README.md` (both domains' rules are in), `docs/limitations.md` (what the markets domain does and leaves: who may act, the category and currency lists)
+- [X] T023 [P] Update `README.md` (both domains' rules are in), `docs/limitations.md` (what the markets domain does and leaves: who may act, the category and currency lists)
 - [ ] T024 [P] Append to research.md "Found during implementation" what V1 to V3 showed and anything the plan said otherwise
 - [ ] T025 `just fmt`, `sbt test`, `just check` (0 findings); confirm `marketsDomain` still depends on `ankka-core` alone (FR-003); run the quickstart's two checks that can fail and put the code back
 

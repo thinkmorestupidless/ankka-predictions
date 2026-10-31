@@ -10,9 +10,10 @@ specs are under `specs/` (`CLAUDE.md` lists them), their scenarios in `features/
 
 The exchange's rules are in (spec 005): placing, matching through the book and the pool,
 cancelling, splitting and merging, suspending, closing and finalising, with the limits fixed when
-it opens. The markets' rules arrive with spec 006: until then a market is drafted and approved and
-refuses every other command as not built, and the scenarios that need a rule are reported
-ignored, naming that spec.
+it opens. The markets' rules are in (spec 006): a market drafted under its field rules, changed
+(only its description once it opens), approved, opened on its open time, suspended and resumed,
+closed on time or early with a reason, its close moved later, resolved on evidence, corrected or
+voided within its review window, and made final.
 
 ## The libraries
 
