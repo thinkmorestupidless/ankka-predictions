@@ -5,11 +5,10 @@ import com.thinkmorestupidless.ankka.core.Serializer
 import java.time.Instant
 
 /**
- * What spec 004 builds of the exchange domain, which the components start from: an exchange opens
- * once, a buy's cost is quantity times price, every other rule is refused as not built until spec
- * 005, and the value and its events cross their serializers unchanged.
+ * The value and its events across their serializers, the open the components start from, and the
+ * cost of a buy. The rules are the features' (`ExchangeFeatures`) and the properties'.
  */
-class ExchangeStubSuite extends munit.FunSuite:
+class ExchangeSerializerSuite extends munit.FunSuite:
 
   private val t0 = Instant.parse("2026-10-31T10:00:00Z")
 
@@ -43,14 +42,6 @@ class ExchangeStubSuite extends munit.FunSuite:
 
   test("a buy's cost is its quantity times its price") {
     assertEquals(Exchange.cost(10, 60), 600L)
-  }
-
-  test("a rule spec 005 has not built is refused as not built, naming the command") {
-    val cancel = ExchangeCommand.Cancel(OrderId("o-1"), OwnerId("ada"), t0)
-    assertEquals(
-      Exchange(opened.next, cancel),
-      Left(Refusal("not built", Map("command" -> "cancel")))
-    )
   }
 
   test("the value and every event case cross their serializers unchanged") {
