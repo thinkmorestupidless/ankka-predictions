@@ -36,6 +36,12 @@ object Quantity:
 number as text or a decimal (the consumer's endpoint, the step definitions) so that "not a
 positive whole number" is one rule, refused `quantity`.
 
+`Open` takes its arguments as given and checks none of them. Its outcomes are an approved
+market's, which spec 006's markets domain refuses unless there are two to twenty with distinct
+names; its unit and limits are the consumer's values. A caller that opens an exchange some other
+way owns those checks: two equal outcomes would match a buy against its own book's buys through
+the pool.
+
 ## Refusals
 
 | `reason` | `names` | When |

@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-21
 
-**Status**: Draft
+**Status**: Building
 
 **Input**: User description: "The `exchange-domain` library of spec 004, in full: the value of
 one market's trading, the commands applied to it, the refusals, the events, and the rules the
