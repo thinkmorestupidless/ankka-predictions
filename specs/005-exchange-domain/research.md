@@ -314,6 +314,10 @@ All four by Trevor, 2026-10-31, through the design run.
 
 - **2026-10-31, the baseline (T001).** `sbt exchangeDomain/test` before any rule: 6 passed, 69
   ignored (65 of `features/exchange/`, 4 of `domain.feature`), `ExchangeStubSuite` 5 green.
+- **2026-10-31, V6.** Holds: with `Position.restingToBuy` added and kept by `replay`, the `0.0.0`
+  `every-event.jsonl` still replays to its recorded state (the snapshot without the field decodes
+  it as 0). The decrement on a buy leg is in `PositionMoves`, beside a sell leg's
+  `restingUnderSells`, so the two are kept by one rule; the positions view ignores both.
 
 ## Requests
 

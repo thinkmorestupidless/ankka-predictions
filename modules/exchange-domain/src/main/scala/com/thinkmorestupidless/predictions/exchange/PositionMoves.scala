@@ -20,7 +20,12 @@ object PositionMoves:
               PositionMove(
                 leg.owner,
                 leg.outcome,
-                p => p.copy(quantity = p.quantity + e.quantity, cost = p.cost + leg.charge)
+                p =>
+                  p.copy(
+                    quantity = p.quantity + e.quantity,
+                    restingToBuy = p.restingToBuy - e.quantity,
+                    cost = p.cost + leg.charge
+                  )
               )
             case Side.Sell =>
               PositionMove(

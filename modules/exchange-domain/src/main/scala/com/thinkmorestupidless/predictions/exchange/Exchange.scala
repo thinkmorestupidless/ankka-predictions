@@ -127,11 +127,10 @@ object Exchange:
           ),
           nextOrder = e.sequence + 1
         )
-        if e.side == Side.Sell then
-          placed.withPosition(e.owner, e.outcome)(p =>
-            p.copy(restingUnderSells = p.restingUnderSells + e.quantity)
-          )
-        else placed
+        placed.withPosition(e.owner, e.outcome)(p =>
+          if e.side == Side.Sell then p.copy(restingUnderSells = p.restingUnderSells + e.quantity)
+          else p.copy(restingToBuy = p.restingToBuy + e.quantity)
+        )
 
       case e: TradeMade =>
         val filled = e.legs.foldLeft(exchange) { (x, leg) =>
@@ -193,12 +192,11 @@ object Exchange:
 
   private def ended(exchange: Exchange, id: OrderId, state: OrderState, ordinal: Int): Exchange =
     exchange.orders.get(id).fold(exchange) { order =>
-      val freed =
+      val freed = exchange.withPosition(order.owner, order.outcome)(p =>
         if order.side == Side.Sell then
-          exchange.withPosition(order.owner, order.outcome)(p =>
-            p.copy(restingUnderSells = p.restingUnderSells - order.remaining)
-          )
-        else exchange
+          p.copy(restingUnderSells = p.restingUnderSells - order.remaining)
+        else p.copy(restingToBuy = p.restingToBuy - order.remaining)
+      )
       freed
         .withoutResting(id)
         .withOrder(id)(o =>
