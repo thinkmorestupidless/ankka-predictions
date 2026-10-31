@@ -32,6 +32,11 @@ named may draft, approve, resolve or void is the resolution port's answer; the d
 operator it is given. The bounds spec 002 set on the wording stay, because they came from what the
 reasoning graph's market layer accepts and a market should fit it whether or not it is mirrored.
 
+An open market may be suspended by an operator with a reason and resumed by one: the
+operator's emergency authority, which the first licence (a US Designated Contract Market,
+`docs/product.md`) requires of the venue. The exchange suspends and resumes with the market
+(spec 005). Suspended, the market still closes when its close comes.
+
 The market tells the consumer when it is next due to change by itself: its open time, its close
 or the end of its review window. The consumer's timer applies the command at that time; the
 domain refuses the command before it.
@@ -73,9 +78,11 @@ market; approve a draft whose close has passed; every refusal names its field.
 An approved market with no open time, or whose open time has passed, opens on approval; one with
 an open time ahead opens when that time comes and is refused opening before it. An open market
 closes when its close comes, or earlier when an operator closes it with a reason. While open, its
-close may be moved later with a reason, never earlier.
+close may be moved later with a reason, never earlier. An open market may be suspended by an
+operator with a reason, and a suspended one resumed; a market that is not open cannot be
+suspended; a suspended market closes when its close comes, as an open one does.
 
-**Why this priority**: The exchange opens and closes with the market.
+**Why this priority**: The exchange opens, suspends, resumes and closes with the market.
 
 **Independent Test**: Approve with and without an open time; open early, on time; close on time,
 early, and move the close both ways.
@@ -88,6 +95,10 @@ early, and move the close both ways.
 - added `features/markets/lifecycle.feature`: an approved market whose open time has passed opens at once
 - added `features/markets/lifecycle.feature`: an open market's close may be moved later with a reason
 - added `features/markets/lifecycle.feature`: an open market's close may not be moved earlier
+- added `features/markets/lifecycle.feature`: an operator suspends an open market naming a reason
+- added `features/markets/lifecycle.feature`: an operator resumes a suspended market
+- added `features/markets/lifecycle.feature`: a market that is not open may not be suspended
+- added `features/markets/lifecycle.feature`: a suspended market closes when its close comes
 - changed `features/markets/resolution.feature`: an open market closes when its close comes
 - changed `features/markets/resolution.feature`: an operator closes an open market early naming a reason
 
@@ -173,6 +184,10 @@ purity.
 - A close moved later on a market whose expected resolution date is before the new close: the
   expected resolution date is moved to the close in the same change.
 - Two changes carrying the same time: applied in the order given; the record keeps both.
+- A suspend of a suspended market, or a resume of an open one: refused naming the state; neither
+  is keyed, since neither moves money.
+- A void of a suspended market: allowed, as of an open one; a close moved while suspended: as
+  while open.
 - A void of a resolved market within the review window: spec 002 allowed void from approved, open
   or closed only, and a wrong outcome is corrected; a market whose question turned out to have no
   answer has no path from resolved to void. [NEEDS CLARIFICATION: whether a resolved market may
@@ -191,12 +206,13 @@ purity.
 
 - **FR-001**: The value MUST be one market: its question, description, category, outcomes,
   currency, open time (or none), close, expected resolution date, resolution criteria and
-  authority; its state (draft, approved, open, closed, resolved, void, final); the record of each
+  authority; its state (draft, approved, open, suspended, closed, resolved, void, final); the
+  record of each
   change with its operator, time and reason; its resolution (outcome, evidence, authority,
   operator, time, the end of the review window) and each correction revising it; its void (reason,
   evidence); and the time of its last change.
-- **FR-002**: The commands MUST be draft, change, approve, open, close, move close, resolve,
-  correct, void and finalise, each carrying its time and, where an operator acts, the operator.
+- **FR-002**: The commands MUST be draft, change, approve, open, suspend, resume, close, move
+  close, resolve, correct, void and finalise, each carrying its time and, where an operator acts, the operator.
   A time earlier than the last change MUST be refused as out of order. Every command MUST yield a
   refusal naming its reason, with no event and no change, or the next value and its events;
   replaying a value's events onto an empty value MUST yield an equal value.
@@ -221,9 +237,13 @@ purity.
   MUST record the operator and the time and, when there is no open time or it has passed, open
   the market in the same change.
 - **FR-007**: An open MUST be refused naming the open time before it; at or after it the market
-  MUST be open. A close MUST be refused naming the state unless the market is open; at or after
-  the close it needs no reason, before it an operator and a reason MUST be recorded.
-- **FR-008**: While open, the close MAY be moved later with an operator and a reason, moving the
+  MUST be open. A close MUST be refused naming the state unless the market is open or suspended;
+  at or after the close it needs no reason, before it an operator and a reason MUST be recorded.
+- **FR-007a**: A suspend MUST be refused naming the state unless the market is open; otherwise it
+  MUST record the operator, the time and a reason, and the market MUST be suspended. A resume MUST
+  be refused naming the state unless the market is suspended; otherwise it MUST record the
+  operator and the time, and the market MUST be open again.
+- **FR-008**: While open or suspended, the close MAY be moved later with an operator and a reason, moving the
   expected resolution date to it when that would otherwise be earlier; moved earlier, the change
   MUST be refused naming the close.
 
@@ -237,8 +257,8 @@ purity.
 - **FR-010**: A correct MUST be refused naming the review window after it, and as no change when
   it names the outcome already resolved; otherwise it MUST record a resolution revising the first,
   with evidence, and restart the review window from its time.
-- **FR-011**: A void MUST be refused naming the state unless the market is approved, open or
-  closed; otherwise it MUST record a reason, at least one piece of evidence, the operator, the
+- **FR-011**: A void MUST be refused naming the state unless the market is approved, open,
+  suspended or closed; otherwise it MUST record a reason, at least one piece of evidence, the operator, the
   time and the end of the review window.
 - **FR-012**: A finalise MUST be refused naming the review window before its end and naming the
   state unless the market is resolved or void; at or after the end the market MUST be final, and
@@ -248,12 +268,12 @@ purity.
 
 - **FR-013**: The value MUST answer, for each change, the operator, the time and the reason, and
   MUST answer the time it is next due: the open time while approved and ahead, the close while
-  open, the end of the review window while resolved or void, none otherwise.
+  open or suspended, the end of the review window while resolved or void, none otherwise.
 
 **Events**
 
-- **FR-014**: The events MUST be at least: drafted, changed, approved, opened, closed, close
-  moved, resolved, corrected, voided, final; and MUST evolve as spec 004 FR-009 says.
+- **FR-014**: The events MUST be at least: drafted, changed, approved, opened, suspended,
+  resumed, closed, close moved, resolved, corrected, voided, final; and MUST evolve as spec 004 FR-009 says.
 
 ### Key Entities
 
@@ -281,8 +301,8 @@ purity.
   setting, 24 hours by default (spec 002); the domain has no default.
 - The wording bounds stay as spec 002 set them from the reasoning graph's market layer; a product
   that never mirrors keeps them all the same.
-- The exchange of spec 005 opens when the market opens, closes when it closes and is made final
-  when it is final; driving one from the other is the consumer's (ankka-modules spec 023).
+- The exchange of spec 005 opens when the market opens, suspends and resumes with it, closes
+  when it closes and is made final when it is final; driving one from the other is the consumer's (ankka-modules spec 023).
 
 ## Dependencies
 

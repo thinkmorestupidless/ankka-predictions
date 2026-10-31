@@ -41,9 +41,14 @@ depends on it is planned.
   services only over HTTP against their documented contracts, and depends on none of the casino's
   libraries. Whether the repository is public is undecided; it is written as if it were (no secret,
   no installation value, no real person's data).
-- **Jurisdiction.** Written for a UKGC-style licence, where a prediction market is a betting
-  product: every order passes the responsible-gambling `may-bet` gate and the KYC play gate, and
-  deposit limits bind. The licence profile is the casino's `kyc` setting.
+- **Jurisdiction.** *Decided 2026-10-31 (Trevor): the first licence is in the United States,
+  as a CFTC Designated Contract Market.* The venue's obligations under that licence (emergency
+  authority, which is the market's suspend and resume in spec 006; position limits; market
+  surveillance; daily publication of trading information; recordkeeping) are the module's in
+  ankka-modules spec 023 and its successors, not the libraries'. Until then this page's default
+  stood: a UKGC-style licence, every order through the responsible-gambling `may-bet` gate and
+  the KYC play gate, deposit limits binding, the licence profile the casino's `kyc` setting;
+  which of those gates a DCM keeps is spec 023's to decide.
 - **Launch currency.** One, assumed GBP, because the origin document prices in pounds.
 - **A void market.** Every share of every outcome is paid an equal share of one unit (fifty pence
   per share in a two-outcome market). Kalshi and Polymarket differ here; to be settled in spec 003.

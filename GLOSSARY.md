@@ -175,6 +175,18 @@ A market an operator has approved and that has not yet opened.
 ### open market
 A market that is trading.
 
+### suspended market
+An open market on which an operator has halted trading with a reason, until it is resumed or its
+close comes. Its resting orders stand and may be cancelled; nothing is placed, split or merged.
+Avoid: halted market, paused market
+
+### suspend
+An operator's halt of trading on an open market, with a reason: the operator's emergency
+authority. The exchange suspends with the market.
+
+### resume
+An operator's reopening of a suspended market; trading continues with the orders that rested.
+
 ### closed market
 A market whose close has passed and that is not yet resolved.
 
@@ -438,7 +450,7 @@ already, still, again, once, twice, more, less, most, least, all, none, some, on
 least, at most, above, below, between, within, over, under, zero, equal, whole, part, rest, new,
 same, named, naming, names, refused, refuses, refusal, accepted, accepts, recorded, records, kept,
 answered, answers, shown, shows, listed, lists, placed, places, cancelled, cancels, filled, fills,
-remaining, opened, opens, closed, closes, resolved, resolves, voided, voids, approved, approves,
+remaining, opened, opens, closed, closes, suspended, suspends, resumed, resumes, resolved, resolves, voided, voids, approved, approves,
 credited, credits, moved, moves, released, releases, paid, pays, held, holds, chosen, chooses,
 makes, made, reads, reading, writes, written, asks, asked, says, said, passes, passed, fails,
 failed, reaches, reached, cannot, may, must, does, do, did, done, pence, pounds, percent, minute,

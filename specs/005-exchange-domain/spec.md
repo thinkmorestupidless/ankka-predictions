@@ -50,7 +50,9 @@ quantity, a duration and an order id. The exchange refuses a price outside one t
 the unit, a quantity that is not a positive whole number, an outcome the market lacks, a state
 that is not open, a cost above the maximum order cost, a position that would pass the maximum
 position, or a sale of more shares than the owner holds beyond what rests under other sells, each
-naming the field or the limit. An accepted buy rests at its cost. The owner, and no one else,
+naming the field or the limit. On a suspended exchange nothing is placed, but a resting order may
+still be cancelled, and when the exchange resumes its resting orders trade again. An accepted buy
+rests at its cost. The owner, and no one else,
 cancels a resting order and its remaining cost is released; a filled order cannot be cancelled. A
 repeat under a known order id with the same fields is answered as the first was and produces no
 event; the same id with different fields is refused naming the id.
@@ -74,6 +76,9 @@ a value with no runtime; the value is unchanged on every refusal.
 - added `features/exchange/orders.feature`: a cancel of an order that is filled is refused naming the state
 - changed `features/exchange/orders.feature`: a repeat of an order under the same id is answered as the first was and changes nothing
 - added `features/exchange/orders.feature`: an order reusing the id of a different order is refused naming the id
+- added `features/exchange/orders.feature`: an order on a suspended exchange is refused naming the state
+- added `features/exchange/orders.feature`: a player cancels a resting order on a suspended exchange and its cost is released
+- added `features/exchange/orders.feature`: a resumed exchange trades again with the orders that rested
 
 ---
 
@@ -178,6 +183,7 @@ without a remainder, and again; every payout once, the pool empty but for the re
 **Acceptance Scenarios**:
 
 - changed `features/exchange/close-and-settlement.feature`: a close expires every resting order and releases every cost
+- added `features/exchange/close-and-settlement.feature`: a suspended exchange closes when its close comes and expires every resting order
 - changed `features/exchange/close-and-settlement.feature`: an order on a closed exchange is refused
 - changed `features/exchange/close-and-settlement.feature`: an exchange made final resolved pays one unit per share of the resolved outcome, nothing for the other outcomes, and empties the pool
 - changed `features/exchange/close-and-settlement.feature`: an exchange made final void pays every share of every outcome an equal part of one unit
@@ -244,6 +250,8 @@ invariants of FR-010, and every money event carrying its key.
   as not fillable whole.
 - A void on an exchange with no sets outstanding: no payout, no remainder, an event all the same.
 - A close on an exchange with no resting order: one event, nothing released.
+- A suspend of a suspended exchange, or a resume of an open one: refused naming the state. The
+  exchange suspends and resumes with its market (spec 006); driving it is the consumer's.
 - Limits on an open exchange: carried when the exchange opens. [NEEDS CLARIFICATION: whether the
   maximum order cost and the maximum position may change on an open exchange, by a command of
   their own, or only when it opens]
@@ -260,13 +268,14 @@ invariants of FR-010, and every money event carrying its key.
 **The value**
 
 - **FR-001**: The value MUST be the exchange of one market: its outcomes, its unit, its maximum
-  order cost and maximum position, its state (open, closed, final), one book per outcome, every
+  order cost and maximum position, its state (open, suspended, closed, final), one book per
+  outcome, every
   order it has accepted by id with its state (resting, filled in part, filled, cancelled,
   expired), the positions per owner and outcome (quantity, quantity resting under sells, cost),
   the sets outstanding, the remainder, the last price of each outcome, the next sequence number
   and the time of its last event.
-- **FR-002**: The commands MUST be open, place, cancel, split, merge, close and finalise, each
-  carrying the time it is applied at. A time earlier than the value's last event MUST be refused
+- **FR-002**: The commands MUST be open, place, cancel, split, merge, suspend, resume, close and
+  finalise, each carrying the time it is applied at. A time earlier than the value's last event MUST be refused
   as out of order. Every command MUST yield either a refusal naming its reason, with no event and
   no change, or the next value and its events; replaying a value's events onto an empty value
   MUST yield an equal value.
@@ -328,6 +337,14 @@ invariants of FR-010, and every money event carrying its key.
 - **FR-015**: After every command, every outcome's total of shares held MUST equal the sets
   outstanding, and the pool MUST equal the sets outstanding times the unit plus the remainder.
 
+**Suspension**
+
+- **FR-015a**: A suspend MUST be refused naming the state unless the exchange is open; suspended,
+  every place, split or merge MUST be refused naming the state, a cancel MUST be applied as while
+  open, and a close MUST be applied as while open. A resume MUST be refused naming the state unless
+  the exchange is suspended; resumed, the exchange MUST be open with every order that rested.
+  Neither moves money, and neither is keyed.
+
 **Close and finality**
 
 - **FR-016**: A close MUST expire every resting order, release every expired buy's remaining
@@ -349,7 +366,8 @@ invariants of FR-010, and every money event carrying its key.
   split, merge), a split or a merge by its key, a payout by the market and the position; so that
   a ledger can be driven from the events alone (spec 004 research R14).
 - **FR-019**: The events MUST be at least: opened, order placed, trade made, order filled, order
-  cancelled, order expired, sets split, sets merged, closed, position paid, remainder kept, final;
+  cancelled, order expired, sets split, sets merged, suspended, resumed, closed, position paid,
+  remainder kept, final;
   and MUST evolve as spec 004 FR-009 says.
 - **FR-020**: The value MUST answer, per outcome, the last price (or none), the best bid, the
   best ask and the depth as quantity per price.

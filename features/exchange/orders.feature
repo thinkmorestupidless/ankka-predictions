@@ -84,3 +84,22 @@ Feature: Placing and cancelling orders
     When "ada" places a buy order "o-12" for "20" shares of "yes" in "m-1" at price "60"
     Then the order is refused naming the id "o-12"
     And the order "o-12" rests in the book of "yes" in "m-1" at price "60" for "10" shares
+
+  Scenario: an order on a suspended exchange is refused naming the state
+    Given a suspended exchange "m-3" with the outcomes "yes" and "no" and a unit of "100"
+    When "ada" places a buy order "o-20" for "10" shares of "yes" in "m-3" at price "60"
+    Then the order is refused naming the state "suspended"
+
+  Scenario: a player cancels a resting order on a suspended exchange and its cost is released
+    Given "ada" placed a buy order "o-21" for "10" shares of "yes" in "m-1" at price "60"
+    And the exchange "m-1" is suspended
+    When "ada" cancels the order "o-21"
+    Then the order "o-21" is cancelled
+    And "ada" is released "600"
+
+  Scenario: a resumed exchange trades again with the orders that rested
+    Given "ada" placed a buy order "o-22" for "10" shares of "yes" in "m-1" at price "60"
+    And the exchange "m-1" is suspended
+    When the exchange "m-1" resumes
+    And "bob" places a sell order "o-23" for "10" shares of "yes" in "m-1" at price "60"
+    Then one trade is made for "10" shares at price "60" between the orders "o-22" and "o-23"

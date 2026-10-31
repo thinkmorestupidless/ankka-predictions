@@ -20,9 +20,9 @@ ankka the release is built against, and the consumer pins the same ankka.
 ```scala
 // com.thinkmorestupidless.predictions.exchange
 final case class Exchange(...)                      // the value, spec 005 FR-001; Exchange.empty
-enum ExchangeCommand { case Open(...); Place(...); Cancel(...); Split(...); Merge(...); Close(...); Finalise(...) }
+enum ExchangeCommand { case Open(...); Place(...); Cancel(...); Split(...); Merge(...); Suspend(...); Resume(...); Close(...); Finalise(...) }
 enum ExchangeEvent   { case Opened(...); OrderPlaced(...); TradeMade(...); OrderFilled(...); OrderCancelled(...);
-                       OrderExpired(...); SetsSplit(...); SetsMerged(...); Closed(...); PositionPaid(...);
+                       OrderExpired(...); SetsSplit(...); SetsMerged(...); Suspended(...); Resumed(...); Closed(...); PositionPaid(...);
                        RemainderKept(...); Final(...) }
 final case class Refusal(reason: String, names: Map[String, String])
 final case class Decision(next: Exchange, events: Vector[ExchangeEvent])
@@ -37,9 +37,9 @@ object Exchange:
 ```scala
 // com.thinkmorestupidless.predictions.markets
 final case class Market(...)                        // the value, spec 006 FR-001; Market.empty
-enum MarketCommand { case Draft(...); Change(...); Approve(...); Open(...); Close(...); MoveClose(...);
+enum MarketCommand { case Draft(...); Change(...); Approve(...); Open(...); Suspend(...); Resume(...); Close(...); MoveClose(...);
                      Resolve(...); Correct(...); Void(...); Finalise(...) }
-enum MarketEvent   { case Drafted(...); Changed(...); Approved(...); Opened(...); Closed(...); CloseMoved(...);
+enum MarketEvent   { case Drafted(...); Changed(...); Approved(...); Opened(...); Suspended(...); Resumed(...); Closed(...); CloseMoved(...);
                      Resolved(...); Corrected(...); Voided(...); Final(...) }
 object Market:
   val empty: Market
@@ -69,11 +69,11 @@ never renamed or removed; a field is only added, with a default (spec 004 FR-009
 
 | Component | Id | Kind | Wire names |
 |---|---|---|---|
-| the exchange | `exchange` | event sourced entity, one per market | commands `open`, `place`, `cancel`, `split`, `merge`, `close`, `finalise`; queries `get`, `prices`, `depth`, `position` |
+| the exchange | `exchange` | event sourced entity, one per market | commands `open`, `place`, `cancel`, `split`, `merge`, `suspend`, `resume`, `close`, `finalise`; queries `get`, `prices`, `depth`, `position` |
 | positions | `exchange-positions` | view of the exchange's changes | query `by-owner` |
 | settlement | `exchange-settlement` | consumer of the exchange's events, calls the ledger | none |
 | exchange timers | `exchange-timers` | timed action | `close` |
-| the market | `market` | event sourced entity, one per market | commands `draft`, `change`, `approve`, `open`, `close`, `move-close`, `resolve`, `correct`, `void`, `finalise`; query `get` |
+| the market | `market` | event sourced entity, one per market | commands `draft`, `change`, `approve`, `open`, `suspend`, `resume`, `close`, `move-close`, `resolve`, `correct`, `void`, `finalise`; query `get` |
 | catalogue | `market-catalogue` | view of the markets' changes | queries `by-state`, `by-category` |
 | market timers | `market-timers` | timed action | `due` |
 

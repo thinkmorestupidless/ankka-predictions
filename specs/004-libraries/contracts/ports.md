@@ -78,6 +78,8 @@ trait ResolutionPort:
   def mayResolve(operator: OperatorId, market: MarketId): ResolutionAnswer
   def mayVoid(operator: OperatorId, market: MarketId): ResolutionAnswer
   def mayClose(operator: OperatorId, market: MarketId): ResolutionAnswer
+  /** Suspend and resume: the operator's emergency authority. */
+  def maySuspend(operator: OperatorId, market: MarketId): ResolutionAnswer
 
 final case class MarketPorts(resolution: ResolutionPort)
 ```
@@ -92,7 +94,7 @@ final case class MarketPorts(resolution: ResolutionPort)
 | A release is keyed by its order and its ordinal for that order, so an order's second release is not a repeat of its first | 005 FR-005, FR-008, FR-018; R14 | `ExchangeEvent`'s release-carrying cases name the ordinal |
 | A trade names how it was made and every leg's charge, payment and release | 005 FR-011, FR-019; R14 | `settlement` passes the `TradeMade` event's legs |
 | A ledger that throws is retried within `ledgerPatience`, then the order is refused as `ledger unavailable` | 004 edge case, R8 | `place` |
-| A resolution-port refusal changes nothing | 004 FR-007 | `resolve`, `void`, `approve`, `close` ask first |
+| A resolution-port refusal changes nothing | 004 FR-007 | `resolve`, `void`, `approve`, `close`, `suspend`, `resume` ask first |
 | The components register nothing | 004 FR-006 | no `registerAll` in a library; `descriptors` is a value the consumer passes |
 
 ## Ids

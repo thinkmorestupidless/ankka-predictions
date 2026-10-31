@@ -39,8 +39,8 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 
 - [ ] T012 [US1] Bind the exchange scenarios of `features/libraries/domain.feature` (book rebuilt from events, refused command unchanged, time carried by the command, every money event names amount, owner and key) in `modules/exchange-domain/src/test/scala/.../exchange/ExchangeFeatures.scala` through the testkit's Gherkin runner, with no actor system (V4). See them fail
 - [ ] T013 [US1] Bind every scenario of `features/exchange/*.feature` that names no gate or ledger in the same file, as pending with the reason "spec 005", so the runner counts them and spec 005 lifts them
-- [ ] T014 [US1] Write `ExchangeCommand` in `EX/ExchangeCommand.scala`: `Open`, `Place`, `Cancel`, `Split`, `Merge`, `Close`, `Finalise`. Each carries `at: Instant` and the fields the components need (ids, owner, outcome, side, price, quantity, duration)
-- [ ] T015 [US1] Write `ExchangeEvent` in `EX/ExchangeEvent.scala`, with spec 005 FR-019's twelve cases by the names in `contracts/artefacts.md`:
+- [ ] T014 [US1] Write `ExchangeCommand` in `EX/ExchangeCommand.scala`: `Open`, `Place`, `Cancel`, `Split`, `Merge`, `Suspend`, `Resume`, `Close`, `Finalise`. Each carries `at: Instant` and the fields the components need (ids, owner, outcome, side, price, quantity, duration)
+- [ ] T015 [US1] Write `ExchangeEvent` in `EX/ExchangeEvent.scala`, with spec 005 FR-019's fourteen cases by the names in `contracts/artefacts.md`:
   - every money-moving case names amount, owner and key (FR-018);
   - the cases that release carry the release's `ordinal`;
   - `TradeMade` carries `through: Through` (Direct, Split, Merge) and `legs: Vector[Leg]`, each leg with owner, order, charge, paid and released (R14).
@@ -62,8 +62,8 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 **Independent test**: `sbt marketsDomain/test` passes the market scenario of `domain.feature`. `features/markets/*` are bound and pending on spec 006.
 
 - [ ] T019 [P] [US2] Bind the market scenario of `features/libraries/domain.feature`, and every scenario of `features/markets/lifecycle.feature` and `resolution.feature` as pending on "spec 006", in `modules/markets-domain/src/test/scala/.../markets/MarketsFeatures.scala`. See the bound scenario fail
-- [ ] T020 [P] [US2] Write `MarketCommand` in `MK/MarketCommand.scala`: `Draft`, `Change`, `Approve`, `Open`, `Close`, `MoveClose`, `Resolve`, `Correct`, `Void`, `Finalise`. Each carries `at`, plus `operator` where someone acts
-- [ ] T021 [P] [US2] Write `MarketEvent` in `MK/MarketEvent.scala`, with spec 006 FR-014's ten cases by the names in `contracts/artefacts.md`
+- [ ] T020 [P] [US2] Write `MarketCommand` in `MK/MarketCommand.scala`: `Draft`, `Change`, `Approve`, `Open`, `Suspend`, `Resume`, `Close`, `MoveClose`, `Resolve`, `Correct`, `Void`, `Finalise`. Each carries `at`, plus `operator` where someone acts
+- [ ] T021 [P] [US2] Write `MarketEvent` in `MK/MarketEvent.scala`, with spec 006 FR-014's twelve cases by the names in `contracts/artefacts.md`
 - [ ] T022 [US2] Write `Market` in `MK/Market.scala`:
   - the value and its `empty`;
   - `apply`, which refuses an out-of-order `at` and otherwise refuses as `notBuilt`;
@@ -84,7 +84,7 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
   - `Money`, `LedgerAnswer`, and `LedgerPort` with `reserve`, `release(market, order, ordinal, money)`, `settle(market, trade, through, legs)`, `charge`, `pay` and `payout`, every call naming the `MarketId`;
   - `GateAnswer` and `GatePort`;
   - `ExchangePorts(ledger, gate, ledgerPatience)`
-- [ ] T025 [P] [US3] Write `MKC/Ports.scala`: `ResolutionAnswer`, `ResolutionPort` with `mayDraft`, `mayApprove`, `mayResolve`, `mayVoid` and `mayClose`, and `MarketPorts`
+- [ ] T025 [P] [US3] Write `MKC/Ports.scala`: `ResolutionAnswer`, `ResolutionPort` with `mayDraft`, `mayApprove`, `mayResolve`, `mayVoid`, `mayClose` and `maySuspend`, and `MarketPorts`
 - [ ] T026 [P] [US3] Write scripted ports in `modules/exchange-components/src/test/scala/.../ScriptedPorts.scala`:
   - the gate allows or refuses with a reason;
   - the ledger answers done, insufficient or refused, or throws n times and then answers;
@@ -110,7 +110,7 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 - [ ] T032 [P] [US3] Write `ExchangeTimers` in `EXC/ExchangeTimers.scala`: id `exchange-timers`, handler `close`. It applies `Close` at the scheduled time, and returns done when the exchange is already closed
 - [ ] T033 [US3] Write `ExchangeComponents` in `EXC/ExchangeComponents.scala`: built from `ExchangePorts`, holding `exchange`, `positions`, `settlement`, `timers` and `descriptors`, with no `registerAll` anywhere (R5)
 - [ ] T034 [US3] Write `MarketEntity` in `MKC/MarketEntity.scala`, with id `market`:
-  - `draft`, `approve`, `close`, `resolve`, `correct` and `void` ask the resolution port first;
+  - `draft`, `approve`, `suspend`, `resume`, `close`, `resolve`, `correct` and `void` ask the resolution port first;
   - a refusal changes nothing;
   - after every command it reschedules the market's timer for `nextDue` (R9);
   - the query is `get`

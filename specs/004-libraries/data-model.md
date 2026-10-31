@@ -11,15 +11,15 @@ live. Signatures are in `contracts/`.
 | `Exchange` | immutable value | spec 005 FR-001: outcomes, unit, limits, state, one `Book` per outcome, orders by id, positions by owner and outcome, sets outstanding, remainder, last prices, next sequence, last time. `Exchange.empty`. Collections `SortedMap` and `Vector`, so `==` is replay equality |
 | `Book` | value inside `Exchange` | resting orders by price then sequence |
 | `Order`, `Trade`, `Position` | values | spec 005 key entities |
-| `ExchangeCommand` | enum | `Open`, `Place`, `Cancel`, `Split`, `Merge`, `Close`, `Finalise`; each with `at: Instant` |
-| `ExchangeEvent` | enum | spec 005 FR-019's twelve; every money-moving case names amount, owner and key (FR-018) |
+| `ExchangeCommand` | enum | `Open`, `Place`, `Cancel`, `Split`, `Merge`, `Suspend`, `Resume`, `Close`, `Finalise`; each with `at: Instant` |
+| `ExchangeEvent` | enum | spec 005 FR-019's fourteen; every money-moving case names amount, owner and key (FR-018) |
 | `Refusal`, `Refusals` | value, catalogue | reason and the names (field, limit, state, owner, id); `Refusals.outOfOrder`, `.price`, ... |
 | `Decision` | value | `(next, events)` |
 | `Exchange.apply`, `Exchange.replay` | functions | the whole rule set |
 | ids | opaque strings | `MarketId`, `OutcomeId`, `OwnerId`, `OrderId`, `TradeId`, `SetKey`, `PositionKey` |
 | serializers | givens | manifests `exchange`, `exchange-event` |
 
-State machine of the value: `empty → open → closed → final` (spec 005 FR-002, FR-016, FR-017).
+State machine of the value: `empty → open ↔ suspended → closed → final` (spec 005 FR-002, FR-015a, FR-016, FR-017).
 
 ## markets-domain
 
@@ -27,15 +27,15 @@ State machine of the value: `empty → open → closed → final` (spec 005 FR-0
 |---|---|---|
 | `Market` | immutable value | spec 006 FR-001; `Market.empty` |
 | `Resolution`, `Void`, `Evidence`, `Change` (the record) | values | spec 006 key entities |
-| `MarketCommand` | enum | `Draft`, `Change`, `Approve`, `Open`, `Close`, `MoveClose`, `Resolve`, `Correct`, `Void`, `Finalise`; each with `at` and, where one acts, `operator` |
-| `MarketEvent` | enum | spec 006 FR-014's ten |
+| `MarketCommand` | enum | `Draft`, `Change`, `Approve`, `Open`, `Suspend`, `Resume`, `Close`, `MoveClose`, `Resolve`, `Correct`, `Void`, `Finalise`; each with `at` and, where one acts, `operator` |
+| `MarketEvent` | enum | spec 006 FR-014's twelve |
 | `Refusal`, `Refusals`, `Decision` | as the exchange's | the markets domain has its own copies; the two libraries share no module (R1) |
 | `Market.apply`, `Market.replay`, `Market.nextDue` | functions | FR-013's next due time is a function of the value |
 | ids | opaque strings | `MarketId`, `OutcomeId`, `OperatorId` |
 | serializers | givens | manifests `market`, `market-event` |
 
-State machine: `empty → draft → approved → open → closed → resolved → final`, with `void` from
-approved, open or closed (and from resolved within the window if the gate says so), then `final`.
+State machine: `empty → draft → approved → open ↔ suspended → closed → resolved → final`, with
+`void` from approved, open, suspended or closed (and from resolved within the window if the gate says so), then `final`.
 
 ## exchange-components
 
@@ -55,7 +55,7 @@ approved, open or closed (and from resolved within the window if the gate says s
 |---|---|---|
 | `ResolutionPort`, `MarketPorts` | trait, value | `contracts/ports.md` |
 | `MarketsComponents(ports)` | class | `descriptors` |
-| `MarketEntity` | event sourced entity, state `Market`, events `MarketEvent` | id `market`; `draft`, `approve`, `close` (early), `resolve`, `correct`, `void` ask the port first; after every command reschedules the market's timer for `nextDue` |
+| `MarketEntity` | event sourced entity, state `Market`, events `MarketEvent` | id `market`; `draft`, `approve`, `suspend`, `resume`, `close` (early), `resolve`, `correct`, `void` ask the port first; after every command reschedules the market's timer for `nextDue` |
 | `CatalogueRows` | view of the markets' changes | id `market-catalogue`; the consumer's product catalogue is its own (spec 004 FR-014); this one answers by state and category for the timers and the consumer's reads |
 | `MarketTimers` | timed action | id `market-timers`; `due` applies `Open`, `Close` or `Finalise` according to the market's state at the time |
 

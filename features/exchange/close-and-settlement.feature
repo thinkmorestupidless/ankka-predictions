@@ -14,6 +14,13 @@ Feature: Close and settlement
     And nothing rests in the book of "yes" in "m-1"
     And "bob" is released "500"
 
+  Scenario: a suspended exchange closes when its close comes and expires every resting order
+    Given "bob" placed a buy order "b-10" for "10" shares of "yes" in "m-1" at price "50"
+    And the exchange "m-1" is suspended
+    When the exchange "m-1" closes
+    Then the order "b-10" is expired
+    And "bob" is released "500"
+
   Scenario: an order on a closed exchange is refused
     Given the exchange "m-1" closed
     When "bob" places a buy order "b-2" for "10" shares of "yes" in "m-1" at price "50"

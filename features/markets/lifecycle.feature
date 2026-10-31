@@ -85,6 +85,27 @@ Feature: A market's life
     When "olga" moves the close of the market "m-16" to "2027-05-01T00:00:00Z" with the reason "a mistake"
     Then the change is refused naming the close
 
+  Scenario: an operator suspends an open market naming a reason
+    Given an open market "m-20" closing at "2027-05-24T00:00:00Z"
+    When "olga" suspends the market "m-20" with the reason "the fixture is under investigation"
+    Then the market "m-20" is a suspended market
+    And the market "m-20" records the reason "the fixture is under investigation"
+
+  Scenario: an operator resumes a suspended market
+    Given a suspended market "m-21" closing at "2027-05-24T00:00:00Z"
+    When "olga" resumes the market "m-21"
+    Then the market "m-21" is an open market
+
+  Scenario: a market that is not open may not be suspended
+    Given a draft market "m-22" with no open time
+    When "olga" suspends the market "m-22" with the reason "too early"
+    Then the suspend is refused naming the state "draft"
+
+  Scenario: a suspended market closes when its close comes
+    Given a suspended market "m-23" closing at "2027-05-24T00:00:00Z"
+    When the time "2027-05-24T00:00:00Z" comes
+    Then the market "m-23" is a closed market
+
   Scenario: a market records who did each change and when
     Given a draft market "m-17" drafted by "olga" at "2026-10-20T09:00:00Z"
     When "olga" approves the market "m-17" at "2026-10-20T10:00:00Z"
