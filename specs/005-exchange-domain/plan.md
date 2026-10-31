@@ -85,6 +85,7 @@ modules/exchange-domain/src/test/scala/com/thinkmorestupidless/predictions/excha
 ├── ExchangeProperties.scala     # new: SC-002, munit-scalacheck (R11)
 ├── ExchangePerfSuite.scala      # new: SC-003 (R12)
 ├── ExchangeSerializerSuite.scala # ExchangeStubSuite's serializer test, kept; the stub tests go
+├── QuantitySuite.scala          # new: Quantity.of over the texts the features use
 └── Samples.scala                # a sample of every event, unchanged in shape
 modules/exchange-components/
 ├── src/main/scala/.../components/Reads.scala          # Depth.of delegates to the domain (R9)

@@ -52,7 +52,7 @@ produces no event and no change.
 |---|---|---|
 | `Open` | state not empty (`state`) | `Opened` |
 | `Place` | state not open (`state`); outcome not the market's (`outcome`); price < 1 or ≥ unit (`price`); quantity < 1 (`quantity`); a buy's cost > maxOrderCost (`limit` = maximum order cost); a buy's quantity + held + resting to buy > maxPosition (`limit` = maximum position); a sell's quantity > held − resting under sells (`quantity held`); a fill-whole order short of a whole fill (`not fillable whole`); a known id with other fields (`id`) | a known id with the same fields: none. Else `OrderPlaced`, then per trade `TradeMade` and the `OrderFilled`s it completes, then a fill-at-once remainder's `OrderCancelled` |
-| `Cancel` | order unknown or not resting / filled in part (`state`); caller not the owner (`owner`); state final or closed (`state`) | `OrderCancelled` with the buy's remaining cost released (a sell: 0) |
+| `Cancel` | order never accepted (`id`); not resting or filled in part (`state`, the order's state word); caller not the owner (`owner`) | `OrderCancelled` with the buy's remaining cost released (a sell: 0) |
 | `Split` | state not open (`state`); sets < 1 (`quantity`); any outcome's position would pass maxPosition (`limit`); known key with other fields (`key`) | `SetsSplit` (charge = sets × unit) |
 | `Merge` | state not open (`state`); sets < 1 (`quantity`); any outcome held free < sets (`quantity held`); known key with other fields (`key`) | `SetsMerged` (paid = sets × unit) |
 | `Suspend` | state not open (`state`) | `Suspended` |

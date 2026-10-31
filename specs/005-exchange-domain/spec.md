@@ -265,7 +265,9 @@ invariants of FR-010, and every money event carrying its key.
 - A fill-whole order that could fill whole only by taking the owner's own resting order: refused
   as not fillable whole.
 - A void on an exchange with no sets outstanding: no payout, no remainder, an event all the same.
-- A close on an exchange with no resting order: one event, nothing released.
+- A close on an exchange with no resting order: one event, nothing released. A close on a final
+  exchange, or a finalise on a final exchange with a different finality: refused naming the
+  state; a finalise with the same finality is the repeat and produces no event.
 - A suspend of a suspended exchange, or a resume of an open one: refused naming the state. The
   exchange suspends and resumes with its market (spec 006); driving it is the consumer's.
 - Limits on an open exchange: carried when the exchange opens and fixed for the exchange's life;
@@ -310,8 +312,9 @@ invariants of FR-010, and every money event carrying its key.
 - **FR-005**: An accepted buy MUST record its cost; a cancel or an expiry MUST release the cost of
   the remaining quantity; a trade MUST charge the buyer the trade's price times the quantity and
   release the difference between that and the order's price times the quantity.
-- **FR-006**: A cancel MUST be refused naming the owner when the caller is not the order's owner,
-  and naming the state when the order is not resting; a cancelled sell MUST free its shares.
+- **FR-006**: A cancel MUST be refused naming the id when the exchange never accepted the order,
+  naming the owner when the caller is not the order's owner, and naming the state when the order
+  is not resting; a cancelled sell MUST free its shares.
 - **FR-007**: A place, split or merge repeated under a known id or key with the same fields MUST
   be answered as the first was and produce no event; under a known id or key with different
   fields it MUST be refused naming the id or key.

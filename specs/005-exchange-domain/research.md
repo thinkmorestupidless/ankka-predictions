@@ -190,9 +190,11 @@ by order id and set key. Its rules:
   opens and then closes or suspends. "the maximum order cost (position) of m-1 is N" reopens the
   exchange with that limit and reapplies the commands applied so far, since limits are fixed at
   open (the clarification).
-- "X holds N shares of Y" seeds by a split of N sets keyed `seed-X-n` applied with the maximum
-  position lifted for that one command, since a given holding is a premise, not a thing the
-  scenario's limits produced; it leaves the pool invariant exact. "at a cost of C" is checked
+- "X holds N shares of Y" is one definition, since the runner matches a step by its text and
+  not by its keyword (V8): while no When has run in the scenario it seeds, by a split of N sets
+  keyed `seed-X-n` applied with the maximum position lifted for that one command (a given holding
+  is a premise, not a thing the scenario's limits produced; the pool invariant stays exact, and a
+  reopen reapplies it lifted); once a When has run it asserts the position's quantity. "at a cost of C" is checked
   against the split's cost (⌊unit / outcomes⌋ per share; 100 shares at unit 100 and two outcomes
   cost 5,000, as `positions.feature` says).
 - "X sold N shares of Y to Z at price p" places Z's buy then X's sell, keyed `seed-…`.
@@ -283,8 +285,9 @@ tag a fixture is never rewritten.
 - The `2.5` example row stays; the domain parses the quantity (R10).
 - A finalise with a different finality on a final exchange is refused naming the state (R7).
 - A losing position gets a `PositionPaid` with `paid` 0; the settlement consumer skips it (R6).
+- A cancel of an order the exchange never accepted is refused naming the id (analyze, U1).
 
-All three by Trevor, 2026-10-31, through the design run.
+All four by Trevor, 2026-10-31, through the design run.
 
 ## Verify at implementation
 
@@ -303,6 +306,9 @@ All three by Trevor, 2026-10-31, through the design run.
   a missing field); checked by replaying the old `every-event.jsonl` before it is regenerated.
 - **V7.** `-Werror` and scalafmt pass on the matcher; `Vector.search` is available on
   `scala.collection.immutable.Vector` in 3.9.0.
+- **V8.** `GherkinSuite.run` matches a step against every definition's expression and fails on
+  two matches, whatever keyword either was declared with (read on 2026-10-31); so no expression
+  is bound twice, and "holds" seeds or asserts by whether a When has run.
 
 ## Found during implementation
 
