@@ -173,7 +173,9 @@ class PlacementSuite extends munit.FunSuite:
     kit.restartService()
     ledger.let("release")
     assertEquals(ended(request), PlacementOutcome.Refused(Refusals.price(100)))
-    // Resumed at the release: the reservation was not asked again.
+    // Resumed at the release: the reservation was not asked again. The held release may or may not
+    // be recorded once the restart cuts it, so the resumed one is asked under the same key, once or
+    // as a repeat.
     assertEquals(ofMarket(m, "reserve").size, 1)
-    assertEquals(ofMarket(m, "release").map(_.key), Vector("o-6/0", "o-6/0"))
+    assertEquals(ofMarket(m, "release").map(_.key).distinct, Vector("o-6/0"))
   }
