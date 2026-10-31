@@ -338,6 +338,16 @@ All four by Trevor, 2026-10-31, through the design run.
   prints what the sequences did (every event kind occurs; merges through the pool are the rarest,
   about 200). V4: the domain's medians on a laptop are 0.03 ms for a resting place and 0.17 ms for
   a matching one, on 11,000 resting orders.
+- **2026-10-31, T026 was already done.** `Settlement` matched `PositionPaid` only when `paid > 0`
+  from spec 004, so a losing position's paid 0 never reaches the ledger; nothing changed there.
+- **2026-10-31, V5.** `Depth`'s JSON is unchanged with its levels from the domain's `Level`
+  (`ReadsSuite` pins it).
+- **2026-10-31, T027.** With the real domain a buy at the unit's price is refused `price` after
+  the reservation is made, so `o-1`, `o-5` and `o-6` keep their release-under-ordinal-0
+  assertions; `o-2`, at 60, rests.
+- **2026-10-31, R13.** `traded.jsonl` (21 events): a split, a sell, a direct buy at a better
+  price, a pool trade through a split, a cancel, a close and a resolved finality whose positions
+  include two paid 0.
 
 ## Requests
 

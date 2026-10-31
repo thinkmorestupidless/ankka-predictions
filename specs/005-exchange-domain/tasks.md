@@ -104,11 +104,11 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 
 **Purpose**: what stood on the stub stands on the rules, with no rule added (SC-004).
 
-- [ ] T025 [P] In `EXC/Reads.scala` make `Depth.of(exchange, outcome, sequence)` call `exchange.depth(outcome)` and import `Level` from the domain; check the JSON of a `Depth` is unchanged (V5) in `EXCT/ComponentsFeatures.scala` or a one-test suite
-- [ ] T026 [P] In `EXC/Settlement.scala` call `ledger.payout` only for a `PositionPaid` with `paid > 0` (R6)
-- [ ] T027 In `EXCT/PlacementSuite.scala` give the buys the exchange must refuse (`o-1`, `o-5`, `o-6`) a price equal to the unit so the domain refuses `price` and the reservation is released under ordinal 0; let `o-2` be accepted and assert it rests; keep every key assertion. Update the class comment
-- [ ] T028 In `EXCT/ComponentsFeatures.scala` lift the trade scenario from `ranElsewhere`: `{string} holds {string} shares of {string} in {string}` as a `split` through the entity keyed `seed-<owner>`, `a resting sell order by {string} for {string} shares of {string} in {string} at price {string}` as a `place`, `the ledger port is asked to settle the trade {string} keyed by {string}`, `asking the ledger port to settle the trade {string} keyed by {string} again is answered as the first was` against `ScriptedLedger`'s call log
-- [ ] T029 [P] In `EXCT/ExchangePerfSuite.scala` drop the `assume` and the `Refused` catch; the test runs
+- [X] T025 [P] In `EXC/Reads.scala` make `Depth.of(exchange, outcome, sequence)` call `exchange.depth(outcome)` and import `Level` from the domain; check the JSON of a `Depth` is unchanged (V5) in `EXCT/ComponentsFeatures.scala` or a one-test suite
+- [X] T026 [P] In `EXC/Settlement.scala` call `ledger.payout` only for a `PositionPaid` with `paid > 0` (R6)
+- [X] T027 In `EXCT/PlacementSuite.scala` give the buys the exchange must refuse (`o-1`, `o-5`, `o-6`) a price equal to the unit so the domain refuses `price` and the reservation is released under ordinal 0; let `o-2` be accepted and assert it rests; keep every key assertion. Update the class comment
+- [X] T028 In `EXCT/ComponentsFeatures.scala` lift the trade scenario from `ranElsewhere`: `{string} holds {string} shares of {string} in {string}` as a `split` through the entity keyed `seed-<owner>`, `a resting sell order by {string} for {string} shares of {string} in {string} at price {string}` as a `place`, `the ledger port is asked to settle the trade {string} keyed by {string}`, `asking the ledger port to settle the trade {string} keyed by {string} again is answered as the first was` against `ScriptedLedger`'s call log
+- [X] T029 [P] In `EXCT/ExchangePerfSuite.scala` drop the `assume` and the `Refused` catch; the test runs
 - [ ] T030 In `EXCT/JournalFixtureWriter.scala` add `traded.jsonl` (R13: open, a split, a resting sell, a buy that trades at a better price, a two-outcome trade through the pool, a cancel, a close, a finality resolved) and refresh the comment; delete `modules/exchange-components/src/test/resources/journal/0.0.0/` and run the writer for `0.0.0`; update `JournalCompatibilitySuite`'s comment on `every-event.jsonl`. `sbt "exchangeComponents/testOnly *JournalCompatibilitySuite"` green
 - [ ] T031 `sbt exchangeComponents/test` green (Docker)
 

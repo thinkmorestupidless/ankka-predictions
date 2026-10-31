@@ -10,9 +10,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.duration.DurationInt
 
 /**
- * The placement workflow's patience and its crashes (research R7, R8). Until spec 005 the exchange
- * refuses every order as not built, so a buy that reaches it is released under ordinal 0: what each
- * test can see is how far the order got, what the ledger was asked, and that nothing rests.
+ * The placement workflow's patience and its crashes (research R7, R8). A buy at the unit's price
+ * reaches the exchange and is refused naming the price, so its reservation is released under
+ * ordinal 0: what each test can see is how far the order got, what the ledger was asked, and what
+ * rests.
  */
 class PlacementSuite extends munit.FunSuite:
 
@@ -42,7 +43,8 @@ class PlacementSuite extends munit.FunSuite:
 
   private def exchange(m: MarketId) = kit.componentClient.forEventSourcedEntity(EntityId(m.value))
 
-  private def buy(m: MarketId, owner: String, order: String): PlaceOrder =
+  /** A buy of ten at 60, or at `price`; at the unit's price the exchange refuses it. */
+  private def buy(m: MarketId, owner: String, order: String, price: Long = 60): PlaceOrder =
     PlaceOrder(
       m,
       ExchangeCommand.Place(
@@ -50,7 +52,7 @@ class PlacementSuite extends munit.FunSuite:
         OwnerId(owner),
         OutcomeId("yes"),
         Side.Buy,
-        60,
+        price,
         10,
         OrderDuration.RestUntilClose,
         Instant.now()
@@ -94,9 +96,9 @@ class PlacementSuite extends munit.FunSuite:
 
   test("a buy the exchange refuses is released once, under ordinal 0") {
     val m = openMarket()
-    assertEquals(placed(buy(m, "ada", "o-1")), PlacementOutcome.Refused(Refusals.notBuilt("place")))
-    assertEquals(ofMarket(m, "reserve").map(c => (c.key, c.amount)), Vector("o-1" -> 600L))
-    assertEquals(ofMarket(m, "release").map(c => (c.key, c.amount)), Vector("o-1/0" -> 600L))
+    assertEquals(placed(buy(m, "ada", "o-1", 100)), PlacementOutcome.Refused(Refusals.price(100)))
+    assertEquals(ofMarket(m, "reserve").map(c => (c.key, c.amount)), Vector("o-1" -> 1000L))
+    assertEquals(ofMarket(m, "release").map(c => (c.key, c.amount)), Vector("o-1/0" -> 1000L))
     nothingRests(m)
   }
 
@@ -105,14 +107,13 @@ class PlacementSuite extends munit.FunSuite:
   ) {
     val m = openMarket()
     ledger.throwing(OwnerId("cid"), times = 2)
-    // Reaching the exchange is all the stub domain allows: it refuses, so the reservation is released.
-    assertEquals(placed(buy(m, "cid", "o-2")), PlacementOutcome.Refused(Refusals.notBuilt("place")))
+    assert(placed(buy(m, "cid", "o-2")).isInstanceOf[PlacementOutcome.Accepted], "o-2 was refused")
     assertEquals(
       ofMarket(m, "reserve").map(_.answer),
       Vector(Left("threw"), Left("threw"), Right(LedgerAnswer.Done))
     )
-    assertEquals(ofMarket(m, "release").map(_.key), Vector("o-2/0"))
-    nothingRests(m)
+    assertEquals(ofMarket(m, "release"), Vector.empty)
+    assertEquals(exchange(m).call(ExchangeEntity.get).invoke().orders.keySet, Set(OrderId("o-2")))
   }
 
   test("a ledger that throws past the patience refuses the order as unavailable, with no event") {
@@ -138,7 +139,7 @@ class PlacementSuite extends munit.FunSuite:
     "a placement that stopped while reserving resumes, and the reservation is a repeat, not a second"
   ) {
     val m       = openMarket()
-    val request = buy(m, "fay", "o-5")
+    val request = buy(m, "fay", "o-5", 100)
     ledger.hold("reserve")
     startOnly(request)
     assert(
@@ -147,7 +148,7 @@ class PlacementSuite extends munit.FunSuite:
     )
     kit.restartService()
     ledger.let("reserve")
-    assertEquals(ended(request), PlacementOutcome.Refused(Refusals.notBuilt("place")))
+    assertEquals(ended(request), PlacementOutcome.Refused(Refusals.price(100)))
     // Asked twice, the held call and the resumed step's, under one key: the second is a repeat.
     val reserves = ofMarket(m, "reserve")
     assertEquals(reserves.map(_.key), Vector("o-5", "o-5"))
@@ -160,7 +161,7 @@ class PlacementSuite extends munit.FunSuite:
     "a placement that stopped after the exchange answered ends with that answer, not a second ask"
   ) {
     val m       = openMarket()
-    val request = buy(m, "gus", "o-6")
+    val request = buy(m, "gus", "o-6", 100)
     ledger.hold("release")
     startOnly(request)
     assert(
@@ -169,7 +170,7 @@ class PlacementSuite extends munit.FunSuite:
     )
     kit.restartService()
     ledger.let("release")
-    assertEquals(ended(request), PlacementOutcome.Refused(Refusals.notBuilt("place")))
+    assertEquals(ended(request), PlacementOutcome.Refused(Refusals.price(100)))
     // Resumed at the release: the reservation was not asked again.
     assertEquals(ofMarket(m, "reserve").size, 1)
     assertEquals(ofMarket(m, "release").map(_.key), Vector("o-6/0", "o-6/0"))
