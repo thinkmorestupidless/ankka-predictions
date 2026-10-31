@@ -210,6 +210,10 @@ categories and currencies).
 - **2026-10-31, one commit for the bodies.** T007 to T009, T011 and T013 to T015 all write
   `Market.apply`; written together, they turn the 36 failing scenarios green, and
   `Refusals.notBuilt` goes with the fall-through it served.
+- **2026-10-31, the property suite's reach.** Purely random runs reached corrections 9 times in
+  100,000 (a resolution needs a draft, an approval and a close first). Half the runs now start
+  from a market closed early; the counts are then Resolved 16,433, Corrected 632, Voided 28,923
+  (1,266 of them after a resolution) and Final 25,799. The default run takes about ten seconds.
 
 ## Requests
 

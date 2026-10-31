@@ -74,9 +74,9 @@ Paths: `MK` = `modules/markets-domain/src/main/scala/com/thinkmorestupidless/pre
 
 **Independent test**: the market scenario of `domain.feature` passes; `MarketProperties` passes 100,000 sequences.
 
-- [ ] T017 [US5] In `MKT/MarketsDomainFeatures.scala` bind `a market {string} that has been approved, opened, closed and resolved`, `the market's events are replayed onto an empty market in sequence`, `the rebuilt market equals the market that produced them`; keep the exchange's scenarios in `ranElsewhere` through `MKT/Pending.scala`
-- [ ] T018 [US5] Write `MKT/MarketProperties.scala` (R11): 100,000 sequences (`-Dpredictions.sequences` overrides, forwarded by `build.sbt`'s `Test / javaOptions` for `marketsDomain` as for `exchangeDomain`), the six invariants of data-model.md, the event counts printed in `afterAll`
-- [ ] T019 [P] [US5] Rename `MKT/MarketStubSuite.scala` to `MKT/MarketSerializerSuite.scala`, keeping only the serializer round trip; the stub's tests go
+- [X] T017 [US5] In `MKT/MarketsDomainFeatures.scala` bind `a market {string} that has been approved, opened, closed and resolved`, `the market's events are replayed onto an empty market in sequence`, `the rebuilt market equals the market that produced them`; keep the exchange's scenarios in `ranElsewhere` through `MKT/Pending.scala`
+- [X] T018 [US5] Write `MKT/MarketProperties.scala` (R11): 100,000 sequences (`-Dpredictions.sequences` overrides, forwarded by `build.sbt`'s `Test / javaOptions` for `marketsDomain` as for `exchangeDomain`), the six invariants of data-model.md, the event counts printed in `afterAll`
+- [X] T019 [P] [US5] Rename `MKT/MarketStubSuite.scala` to `MKT/MarketSerializerSuite.scala`, keeping only the serializer round trip; the stub's tests go
 
 **Checkpoint**: `sbt marketsDomain/test` green: every scenario, 0 ignored but the exchange's of `domain.feature`.
 
