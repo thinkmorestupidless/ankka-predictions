@@ -45,3 +45,9 @@ product needs them. An answer is a change to a casino spec, or a reason it is no
    reservation, and its settlement runs from a buyer to a seller. Needed: a split, or a
    settlement, that charges an order's reservation into the pool under the trade's key, one per
    leg. The merge side (two sells paid from the pool) is spec 022's payment as it stands.
+10. **Who may change a market or move its close.** The market entity asks the resolution port
+    before a draft, an approval, a suspend, a resume, an early close, a resolve, a correction and
+    a void, and asks nothing before a `change` or a `move close` (spec 004 as built). An approved
+    market's resolution criteria and authority may change until it opens (spec 006 FR-005), so the
+    predictions module (ankka-modules spec 023) checks the `markets` permission before it calls
+    either (Trevor, 2026-10-31).

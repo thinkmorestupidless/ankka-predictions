@@ -3,7 +3,7 @@
 The honest list of what this product does not do. Kept as features land; a claim anywhere else
 that goes past this page is a defect in the claim.
 
-*As of 2026-10-31: the exchange library runs; the markets library drafts and approves only.*
+*As of 2026-10-31: both libraries run; no service of the product does.*
 
 ## What the exchange does
 
@@ -21,9 +21,26 @@ that goes past this page is a defect in the claim.
   its complete sets are split and merged explicitly.
 - No self-trade prevention beyond skipping an owner's own resting order.
 
+## What a market does
+
+- A market's whole life: drafted under its field rules, changed (only its description once it
+  opens), approved, opened on its open time, suspended and resumed, closed on its close or early
+  with a reason, its close moved later, resolved on evidence, corrected or voided within its
+  review window, and made final when the window passes.
+- It tells the consumer when it is next due to change by itself, and records who did each change.
+
+## What a market does not
+
+- It checks no permission: who may draft, approve, suspend, close, resolve or void is the
+  consumer's resolution port, and a change or a move of the close asks the port nothing (the
+  consumer checks first).
+- It keeps the category and the currency as text; which a product offers is the consumer's.
+- It reads no clock: the consumer's timer applies the open, the close and the finality.
+- A market whose open comes after its close stays approved and is refused the open; the domain
+  raises nothing, so finding it (and voiding it or moving both times) is the consumer's.
+
 ## Not built
 
-- The markets' rules (spec 006): suspend, close, resolve and void of a market.
 - No service of the product exists; the libraries are composed by a consumer.
 - No wallet, no forecast, no interface.
 - No evidence is ingested and no agent forecasts.

@@ -58,7 +58,7 @@ object JournalFixtureWriter:
       every.foldLeft(Market.empty)(Market.replay)
     )
 
-    // A scenario this build's domain runs: a market drafted and approved, opening at once.
+    // A market drafted and approved, opening at once: the scenario every consumer starts from.
     val drafted = Market(
       Market.empty,
       MarketCommand.Draft(
@@ -71,3 +71,44 @@ object JournalFixtureWriter:
     val approved = Market(drafted.next, MarketCommand.Approve(OperatorId("lead"), t))
       .fold(r => sys.error(s"the market was not approved: $r"), identity)
     Journal.write(dir.resolve("opened.jsonl"), drafted.events ++ approved.events, approved.next)
+
+    // A market's whole life (research R13), and one voided within its window after a resolution.
+    val ops      = OperatorId("ops")
+    val lead     = OperatorId("lead")
+    val evidence = Vector(Evidence("the source", "https://example.org/result", "it happened"))
+    val day      = Duration.ofDays(1)
+    def run(commands: MarketCommand*): Decision =
+      commands.foldLeft(Decision(Market.empty, Vector.empty)) { (d, c) =>
+        Market(d.next, c)
+          .fold(r => sys.error(s"$c: $r"), n => Decision(n.next, d.events ++ n.events))
+      }
+    val defined = Samples.definition("yes", "no", "USD", t, openTime = Some(t.plus(day)))
+    val closed = Vector(
+      MarketCommand.Draft(MarketId("m-2"), ops, defined, t),
+      MarketCommand.Change(ops, defined.copy(description = "Whether it happens, as reported."), t),
+      MarketCommand.Approve(lead, t),
+      MarketCommand.Open(t.plus(day)),
+      MarketCommand.Suspend(lead, "the source is down", t.plus(day.multipliedBy(2))),
+      MarketCommand.Resume(lead, t.plus(day.multipliedBy(3))),
+      MarketCommand
+        .MoveClose(lead, defined.close.plus(day), "a delay", t.plus(day.multipliedBy(4))),
+      MarketCommand.Close(None, None, defined.close.plus(day))
+    )
+    val resolvedAt = defined.close.plus(day.multipliedBy(2))
+    val resolved = run(
+      (closed ++ Vector(
+        MarketCommand.Resolve(lead, OutcomeId("yes"), evidence, "the authority", day, resolvedAt),
+        MarketCommand.Correct(lead, OutcomeId("no"), evidence, day, resolvedAt.plusSeconds(3600)),
+        MarketCommand.Finalise(resolvedAt.plus(day.multipliedBy(2)))
+      ))*
+    )
+    Journal.write(dir.resolve("resolved.jsonl"), resolved.events, resolved.next)
+    val voided = run(
+      (closed ++ Vector(
+        MarketCommand.Resolve(lead, OutcomeId("yes"), evidence, "the authority", day, resolvedAt),
+        MarketCommand
+          .Void(lead, "the question had no answer", evidence, day, resolvedAt.plusSeconds(3600)),
+        MarketCommand.Finalise(resolvedAt.plus(day.multipliedBy(2)))
+      ))*
+    )
+    Journal.write(dir.resolve("voided.jsonl"), voided.events, voided.next)

@@ -28,6 +28,11 @@ Feature: Closing and resolving a market
     When "olga" resolves the market "m-4" to "yes" on no evidence
     Then the resolution is refused naming the evidence
 
+  Scenario: a resolution naming no authority is refused
+    Given a closed market "m-20" with the outcomes "yes" and "no"
+    When "olga" resolves the market "m-20" to "yes" on the evidence "premierleague.com" at "https://premierleague.com/tables" saying "Newcastle finished fourth" by no authority
+    Then the resolution is refused naming the authority
+
   Scenario: a resolution naming an outcome the market does not have is refused
     Given a closed market "m-5" with the outcomes "yes" and "no"
     When "olga" resolves the market "m-5" to "maybe" on the evidence "premierleague.com" at "https://premierleague.com/tables" saying "Newcastle finished fourth"
@@ -79,6 +84,16 @@ Feature: Closing and resolving a market
     Given a void market "m-14" voided at "2027-05-25T10:00:00Z"
     When the time "2027-05-26T10:00:00Z" comes
     Then the market "m-14" is a final market
+
+  Scenario: a resolved market is voided within its review window
+    Given a resolved market "m-18" resolved to "yes" "2" hours ago
+    When "olga" voids the market "m-18" with the reason "the question had no answer" on the evidence "premierleague.com" at "https://premierleague.com/news" saying "the season was abandoned"
+    Then the market "m-18" is a void market
+
+  Scenario: a resolved market may not be voided after the review window
+    Given a resolved market "m-19" resolved to "yes" "25" hours ago
+    When "olga" voids the market "m-19" with the reason "the question had no answer" on the evidence "premierleague.com" at "https://premierleague.com/news" saying "the season was abandoned"
+    Then the void is refused naming the review window
 
   Scenario: a final market may not be voided
     Given a final market "m-15"

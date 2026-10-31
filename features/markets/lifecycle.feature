@@ -74,6 +74,28 @@ Feature: A market's life
     Then the change is refused naming the state "approved"
     And the market "m-14" asks "Will it rain?"
 
+  Scenario: an approved market's resolution criteria may be changed before it opens
+    Given an approved market "m-24"
+    When "olga" changes the resolution criteria of the market "m-24" to "The final Premier League table, as published"
+    Then the market "m-24" has the resolution criteria "The final Premier League table, as published"
+
+  Scenario: an approved market's open time may not be removed
+    Given an approved market "m-26" opening at "2026-11-01T09:00:00Z"
+    When "olga" changes the market "m-26" to open with no open time
+    Then the change is refused naming the open time
+    And the market "m-26" is next due at "2026-11-01T09:00:00Z"
+
+  Scenario: an approved market is not opened after its close
+    Given an approved market "m-27" opening at "2026-11-01T09:00:00Z" and closing at "2026-11-08T00:00:00Z"
+    When the time "2026-11-09T00:00:00Z" comes
+    Then the open is refused naming the close
+    And the market "m-27" is an approved market
+
+  Scenario: an open market's resolution criteria may not be changed
+    Given an open market "m-25" closing at "2027-05-24T00:00:00Z"
+    When "olga" changes the resolution criteria of the market "m-25" to "The table on 1 May"
+    Then the change is refused naming the state "open"
+
   Scenario: an open market's close may be moved later with a reason
     Given an open market "m-15" closing at "2027-05-24T00:00:00Z"
     When "olga" moves the close of the market "m-15" to "2027-05-31T00:00:00Z" with the reason "the season was extended"

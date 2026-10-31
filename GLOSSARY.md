@@ -12,7 +12,7 @@ order or a position carries; who they are, their account and their money are the
 Avoid: user, trader, customer, participant
 
 ### owner
-*Proposed.* The player an order, a position, a split or a merge belongs to; the only player who
+The player an order, a position, a split or a merge belongs to; the only player who
 may cancel the order.
 
 ### operator
@@ -43,12 +43,12 @@ The money one buy order's cost sets aside from its owner's available money, keye
 until a trade charges it or a release gives it back.
 
 ### reserve
-*Proposed.* To set a buy order's cost aside from its owner's available money before the order
+To set a buy order's cost aside from its owner's available money before the order
 reaches the book, keyed by the order: the consumer's ledger does it when the placement asks.
 What it sets aside is a reservation; giving part of it back is a release.
 
 ### hold
-*Proposed.* To own shares of an outcome: a player holds the quantity of their position. The
+To own shares of an outcome: a player holds the quantity of their position. The
 wallet's hold on money for a withdrawal is ankka-modules' word, not this project's.
 
 ### minor unit
@@ -119,13 +119,13 @@ The moment trading ends on a market; may be moved later while the market is open
 Avoid: expiry, closing time
 
 ### open time
-*Proposed.* The moment an approved market opens; a market with none opens on approval.
+The moment an approved market opens; a market with none opens on approval.
 
 ### expected resolution date
-*Proposed.* The date an operator expects to resolve the market, no earlier than its close.
+The date an operator expects to resolve the market, no earlier than its close.
 
 ### next due
-*Proposed.* The time a market is next due to change by itself: its open time, its close, or the
+The time a market is next due to change by itself: its open time, its close, or the
 end of its review window; what a consumer sets a timer for.
 
 ### resolution criteria
@@ -353,58 +353,58 @@ The slug a route carries that names the product to the payments stack; this prod
 ## Libraries
 
 ### library
-*Proposed.* An artefact this repository publishes for a consumer to build on: a domain or its
+An artefact this repository publishes for a consumer to build on: a domain or its
 components. Four: `exchange-domain`, `exchange-components`, `markets-domain`, `markets-components`.
 
 ### domain
-*Proposed.* The pure rules of a book or a market: values, commands, refusals and events, reading
+The pure rules of a book or a market: values, commands, refusals and events, reading
 nothing outside themselves.
 
 ### command
-*Proposed.* What is applied to a value to change it: it yields a refusal naming its reason or the
+What is applied to a value to change it: it yields a refusal naming its reason or the
 next value and its events.
 
 ### event
-*Proposed.* What a command led to, applied to a value to yield the next; the journal holds events.
+What a command led to, applied to a value to yield the next; the journal holds events.
 
 ### journal
-*Proposed.* The sequence of events a consumer keeps for a book or a market, from which the value
+The sequence of events a consumer keeps for a book or a market, from which the value
 is rebuilt.
 
 ### replay
-*Proposed.* Applying a journal's events to an empty value in sequence.
+Applying a journal's events to an empty value in sequence.
 
 ### manifest
-*Proposed.* The name an event is stored under in a journal, by which a release knows how to apply it.
+The name an event is stored under in a journal, by which a release knows how to apply it.
 
 ### release
-*Proposed.* A published version of the libraries, from a tag.
+A published version of the libraries, from a tag.
 
 ### components
-*Proposed.* The entities, views and timers written against a domain, which a consumer registers
+The entities, views and timers written against a domain, which a consumer registers
 in its service.
 
 ### consumer
-*Proposed.* A service that takes the libraries, registers the components and supplies the ports;
+A service that takes the libraries, registers the components and supplies the ports;
 first, eitheror's predictions module.
 
 ### port
-*Proposed.* The seam through which the components reach the outside world; the consumer
+The seam through which the components reach the outside world; the consumer
 implements it.
 
 ### ledger port
-*Proposed.* The port for money: reserve, release, settle and pay, each keyed; it answers done,
+The port for money: reserve, release, settle and pay, each keyed; it answers done,
 insufficient, or a refusal with its reason.
 
 ### gate port
-*Proposed.* The port that says whether a player may place an order; it answers allow or a refusal
+The port that says whether a player may place an order; it answers allow or a refusal
 with its reason.
 
 ### resolution port
-*Proposed.* The port that says whether a caller may resolve or void a market.
+The port that says whether a caller may resolve or void a market.
 
 ### out of order
-*Proposed.* Of a command: carrying a time earlier than the value's last event; refused.
+Of a command: carrying a time earlier than the value's last event; refused.
 
 ## Everyday words
 

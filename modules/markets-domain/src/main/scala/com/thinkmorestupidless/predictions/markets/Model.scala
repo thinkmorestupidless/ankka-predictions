@@ -6,7 +6,8 @@ import java.time.{Instant, LocalDate}
 
 /**
  * A market's state: `empty → draft → approved → open ↔ suspended → closed → resolved → final`, with
- * `void` from approved, open, suspended or closed, then `final` (spec 006 FR-001).
+ * `void` from approved, open, suspended, closed or resolved within its review window, then `final`
+ * (spec 006 FR-001, FR-011).
  */
 enum MarketState:
   case Empty, Draft, Approved, Open, Suspended, Closed, Resolved, Void, Final
