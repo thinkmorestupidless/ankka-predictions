@@ -14,7 +14,7 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 
 ## Phase 1: Setup
 
-- [ ] T001 Run `sbt exchangeDomain/test` on the branch and record the baseline: `ExchangeStubSuite` green, every scenario of `features/exchange/` reported ignored naming spec 005, three of `domain.feature` likewise. Then replay `modules/exchange-components/src/test/resources/journal/0.0.0/every-event.jsonl` once more after T004 (V6) before it is regenerated in T030
+- [X] T001 Run `sbt exchangeDomain/test` on the branch and record the baseline: `ExchangeStubSuite` green, every scenario of `features/exchange/` reported ignored naming spec 005, three of `domain.feature` likewise. Then replay `modules/exchange-components/src/test/resources/journal/0.0.0/every-event.jsonl` once more after T004 (V6) before it is regenerated in T030
 
 ## Phase 2: Foundational (blocks every story)
 

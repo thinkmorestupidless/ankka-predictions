@@ -312,7 +312,8 @@ All four by Trevor, 2026-10-31, through the design run.
 
 ## Found during implementation
 
-*Appended as the work goes.*
+- **2026-10-31, the baseline (T001).** `sbt exchangeDomain/test` before any rule: 6 passed, 69
+  ignored (65 of `features/exchange/`, 4 of `domain.feature`), `ExchangeStubSuite` 5 green.
 
 ## Requests
 
