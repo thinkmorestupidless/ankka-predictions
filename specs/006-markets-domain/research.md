@@ -207,6 +207,9 @@ categories and currencies).
 - **2026-10-31, the full draft step.** With `"yes" and "no" in "GBP"` as literal text it still had
   seven values, so the category `"sport"` is literal too. In the correction with a time, the
   locator's slashes are escaped (`\/`), since `/` is alternation in a cucumber expression.
+- **2026-10-31, one commit for the bodies.** T007 to T009, T011 and T013 to T015 all write
+  `Market.apply`; written together, they turn the 36 failing scenarios green, and
+  `Refusals.notBuilt` goes with the fall-through it served.
 
 ## Requests
 

@@ -34,6 +34,3 @@ object Refusals:
   def reviewWindow(length: java.time.Duration): Refusal =
     Refusal("review window", Map("review window" -> length.toString))
   val noChange: Refusal = Refusal("no change")
-
-  /** A rule spec 006 has not yet built; the stub's answer to every such command. */
-  def notBuilt(command: String): Refusal = Refusal("not built", Map("command" -> command))
