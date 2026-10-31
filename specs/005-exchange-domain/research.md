@@ -233,8 +233,10 @@ outstanding and the pool equals sets × unit + remainder; (2) no position's quan
 `restingUnderSells ≤ quantity`; (3) for every order, `cost − Σ released − Σ charged = remaining ×
 price` while it rests, and 0 once filled, cancelled or expired, so the resting buys' costs equal
 what the events say is reserved; (4) the events replayed onto `Exchange.empty` equal the value, and
-a refusal leaves the value identical. Every money event's amount is non-negative and its owner
-and key non-empty. A shrunk counterexample prints the sequence.
+a refusal leaves the value identical. Every money event's amount is non-negative, a placed buy's cost
+among them (the owners and keys are the generator's, never empty, so they are not asserted), and
+quantities near `Long.MaxValue` are drawn so an overflowing limit check is seen. A failure prints
+the sequence; it is not shrunk.
 
 **Rests on.** SC-002; munit-scalacheck 1.2.0's `scalaCheckTestParameters` (verify V2). At a few
 microseconds per command the default run is well under a minute (verify V3).

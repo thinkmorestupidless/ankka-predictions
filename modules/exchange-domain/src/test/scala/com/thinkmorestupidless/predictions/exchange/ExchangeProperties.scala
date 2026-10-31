@@ -10,7 +10,8 @@ import java.time.Instant
  * money events put in and took out; no position goes negative and what rests under orders is what
  * the books hold; every buy's reservation, less what it released and was charged, is what still
  * rests; a decision's next value is its events replayed; the whole journal replays to the value;
- * trades are numbered in turn. `-Dpredictions.sequences=<n>` sets the count (100,000).
+ * trades and accepted orders are numbered in turn; every money amount is non-negative.
+ * `-Dpredictions.sequences=<n>` sets the count (100,000).
  */
 class ExchangeProperties extends munit.ScalaCheckSuite:
 
@@ -35,6 +36,9 @@ class ExchangeProperties extends munit.ScalaCheckSuite:
     if tight then 30 else 10_000
   )
 
+  /** Quantities whose product with a price, or sum with a position, overflows a `Long`. */
+  private val huge = Gen.oneOf(Long.MaxValue, Long.MaxValue / 2 + 1, Long.MaxValue / 99 + 1)
+
   /** A command for the `i`th step, with the time it carries. */
   private def command(w: World, i: Int): Gen[ExchangeCommand] =
     val at = t0.plusSeconds(i.toLong)
@@ -44,7 +48,7 @@ class ExchangeProperties extends munit.ScalaCheckSuite:
       outcome  <- Gen.oneOf(w.outcomes)
       side     <- Gen.oneOf(Side.Buy, Side.Sell)
       price    <- Gen.frequency(20 -> Gen.choose(1L, 99L), 1 -> Gen.oneOf(0L, 100L))
-      quantity <- Gen.frequency(20 -> Gen.choose(1L, 20L), 1 -> Gen.const(0L))
+      quantity <- Gen.frequency(20 -> Gen.choose(1L, 20L), 1 -> Gen.const(0L), 1 -> huge)
       duration <- Gen.frequency(
         6 -> Gen.const(OrderDuration.RestUntilClose),
         2 -> Gen.const(OrderDuration.FillAtOnce),
@@ -58,7 +62,7 @@ class ExchangeProperties extends munit.ScalaCheckSuite:
     val sets = for
       key   <- Gen.choose(0, 5).map(k => SetKey(s"k-$k"))
       owner <- Gen.oneOf(owners)
-      n     <- Gen.choose(0L, 12L)
+      n     <- Gen.frequency(12 -> Gen.choose(0L, 12L), 1 -> huge)
       split <- Gen.frequency(3 -> true, 1 -> false)
     yield
       if split then ExchangeCommand.Split(key, owner, n, at)
@@ -134,6 +138,8 @@ class ExchangeProperties extends munit.ScalaCheckSuite:
     }
     val trades = journal.collect { case t: ExchangeEvent.TradeMade => t.sequence }
     assertEquals(trades, (1L to trades.size.toLong).toVector, s"trade numbers: $clue")
+    val accepted = journal.collect { case p: ExchangeEvent.OrderPlaced => p.sequence }
+    assertEquals(accepted, (1L to accepted.size.toLong).toVector, s"order sequences: $clue")
     assertEquals(
       journal.foldLeft(Exchange.empty)(Exchange.replay),
       x,
@@ -141,7 +147,8 @@ class ExchangeProperties extends munit.ScalaCheckSuite:
     )
 
   private def amounts(e: ExchangeEvent): Vector[Long] = e match
-    case t: ExchangeEvent.TradeMade => t.legs.flatMap(l => Vector(l.charge, l.paid, l.released))
+    case p: ExchangeEvent.OrderPlaced => Vector(p.cost)
+    case t: ExchangeEvent.TradeMade   => t.legs.flatMap(l => Vector(l.charge, l.paid, l.released))
     case c: ExchangeEvent.OrderCancelled => Vector(c.released)
     case c: ExchangeEvent.OrderExpired   => Vector(c.released)
     case s: ExchangeEvent.SetsSplit      => Vector(s.charge)

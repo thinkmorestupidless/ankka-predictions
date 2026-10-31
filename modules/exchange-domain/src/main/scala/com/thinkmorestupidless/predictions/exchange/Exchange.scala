@@ -131,19 +131,21 @@ object Exchange:
         if same then repeated(x) else Left(Refusals.id(c.order))
       case None =>
         val held = x.position(c.owner, c.outcome)
-        val cost = if c.side == Side.Buy then Exchange.cost(c.quantity, c.price) else 0L
         if x.state != ExchangeState.Open then Left(Refusals.state(x.state))
         else if !x.outcomes.contains(c.outcome) then Left(Refusals.outcome(c.outcome))
         else if c.price < 1 || c.price >= x.unit then Left(Refusals.price(c.price))
         else if c.quantity < 1 then Left(Refusals.quantity(c.quantity.toString))
-        else if c.side == Side.Buy && cost > x.maxOrderCost then
+        // Divided and subtracted, not multiplied and added: a quantity near `Long.MaxValue` would
+        // wrap a product or a sum below the limit and be accepted with a negative cost.
+        else if c.side == Side.Buy && c.quantity > x.maxOrderCost / c.price then
           Left(Refusals.limit(Refusals.maximumOrderCost))
         else if c.side == Side.Buy &&
-          held.quantity + held.restingToBuy + c.quantity > x.maxPosition
+          c.quantity > x.maxPosition - held.quantity - held.restingToBuy
         then Left(Refusals.limit(Refusals.maximumPosition))
         else if c.side == Side.Sell && c.quantity > held.quantity - held.restingUnderSells then
           Left(Refusals.quantityHeld(held.quantity - held.restingUnderSells))
         else
+          val cost = if c.side == Side.Buy then Exchange.cost(c.quantity, c.price) else 0L
           val placed = ExchangeEvent.OrderPlaced(
             c.order,
             c.owner,
@@ -173,7 +175,7 @@ object Exchange:
         decide(x, Vector(ExchangeEvent.OrderCancelled(o.id, o.owner, released, ordinal, c.at)))
 
   /** Whether an order is in its book. */
-  def resting(o: Order): Boolean =
+  private[exchange] def resting(o: Order): Boolean =
     o.state == OrderState.Resting || o.state == OrderState.FilledInPart
 
   /**
@@ -197,7 +199,7 @@ object Exchange:
       else if c.sets < 1 then Left(Refusals.quantity(c.sets.toString))
       else if x.outcomes.exists { o =>
           val p = x.position(c.owner, o)
-          p.quantity + p.restingToBuy + c.sets > x.maxPosition
+          c.sets > x.maxPosition - p.quantity - p.restingToBuy
         }
       then Left(Refusals.limit(Refusals.maximumPosition))
       else
