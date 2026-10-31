@@ -135,12 +135,34 @@ class MarketProperties extends munit.ScalaCheckSuite:
     closed <- Gen.oneOf(true, false)
   yield if closed then closing ++ cs.map(later) else cs
 
-  private def due(m: Market): Option[Instant] = m.state match
-    case MarketState.Approved                     => m.definition.flatMap(_.openTime)
-    case MarketState.Open | MarketState.Suspended => m.definition.map(_.close)
-    case MarketState.Resolved                     => m.resolution.map(_.windowEnd)
-    case MarketState.Void                         => m.void.map(_.windowEnd)
-    case _                                        => None
+  /**
+   * The next due time worked out from the journal alone, not from the market's value: the open time
+   * once approved, the close once opened (the latest moved close), the window's end once resolved,
+   * corrected or voided, nothing once closed or final.
+   */
+  private def due(journal: Vector[MarketEvent]): Option[Instant] =
+    import MarketEvent.*
+    // (definition, phase, window end): the phase is what is timed next, from the event's name.
+    val (d, phase, end) =
+      journal.foldLeft((Option.empty[Definition], "draft", Option.empty[Instant])) {
+        case ((_, _, _), e: Drafted)    => (Some(e.definition), "draft", None)
+        case ((_, p, w), e: Changed)    => (Some(e.definition), p, w)
+        case ((d, _, w), _: Approved)   => (d, "opening", w)
+        case ((d, _, w), _: Opened)     => (d, "closing", w)
+        case ((d, p, w), _: Suspended)  => (d, p, w)
+        case ((d, p, w), _: Resumed)    => (d, p, w)
+        case ((d, p, w), e: CloseMoved) => (d.map(_.copy(close = e.close)), p, w)
+        case ((d, _, _), _: Closed)     => (d, "closed", None)
+        case ((d, _, _), e: Resolved)   => (d, "window", Some(e.windowEnd))
+        case ((d, _, _), e: Corrected)  => (d, "window", Some(e.windowEnd))
+        case ((d, _, _), e: Voided)     => (d, "window", Some(e.windowEnd))
+        case ((d, _, _), _: Final)      => (d, "final", None)
+      }
+    phase match
+      case "opening" => d.flatMap(_.openTime)
+      case "closing" => d.map(_.close)
+      case "window"  => end
+      case _         => None
 
   private val ran     = java.util.concurrent.atomic.AtomicInteger()
   private val counted = scala.collection.concurrent.TrieMap.empty[String, Long]
@@ -175,7 +197,16 @@ class MarketProperties extends munit.ScalaCheckSuite:
               assertEquals(d.next.lastTime, all.lastOption.map(_.at).orElse(m.lastTime), clue)
               m.lastTime.foreach(t => assert(!d.next.lastTime.exists(_.isBefore(t)), clue))
               assertEquals(d.next.record.size, all.size, s"the record: $clue")
-              assertEquals(d.next.nextDue, due(d.next), s"next due: $clue")
+              assertEquals(d.next.nextDue, due(all), s"next due: $clue")
+              // An approved market is always due to open; an open one never opens past its close.
+              if d.next.state == MarketState.Approved then
+                assert(d.next.nextDue.isDefined, s"approved with nothing due: $clue")
+              d.events.collect { case o: MarketEvent.Opened => o }.foreach { o =>
+                assert(
+                  d.next.definition.exists(_.close.isAfter(o.at)),
+                  s"opened past its close: $clue"
+                )
+              }
               (d.next, all)
       }: Unit
     }
