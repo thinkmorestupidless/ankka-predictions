@@ -23,9 +23,14 @@ Feature: The exchange and markets domains are values
 
   Scenario: the time a rule needs is carried by the command, not read
     Given an exchange "m-1" whose last event is at "10:00"
-    When an order carrying the time "09:59" is applied to the exchange
+    When a close carrying the time "09:59" is applied to the exchange
     Then the command is refused as out of order
     And the exchange is unchanged
+
+  Scenario: an owner's order that reaches the book behind a later event is accepted at the book's time
+    Given an exchange "m-1" whose last event is at "10:00"
+    When an order carrying the time "09:59" is applied to the exchange
+    Then the order is accepted and its events carry the time "10:00"
 
   Scenario: every event that moves money names the amount, the owner and what it is keyed by
     Given an open exchange "m-1" with the outcomes "yes" and "no" and a unit of "100"
