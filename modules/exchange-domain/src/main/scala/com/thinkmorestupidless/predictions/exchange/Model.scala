@@ -62,13 +62,16 @@ object Through:
   given JsonValueCodec[Through] = wordCodec(values, word)
 
 /**
- * One side of a trade: what its order is charged from its reservation, what it is paid, and what of
- * its reservation the trade frees under the order's next release ordinal (0 when it frees nothing).
- * Spec 005 FR-018; spec 004 research R14.
+ * One side of a trade: its order's outcome and side, what it is charged from its reservation, what
+ * it is paid, and what of its reservation the trade frees under the order's next release ordinal (0
+ * when it frees nothing). The outcome and side make a trade readable without its orders: a split's
+ * legs are two buys of different outcomes, a merge's two sells. Spec 005 FR-018; research R14.
  */
 final case class Leg(
     owner: OwnerId,
     order: OrderId,
+    outcome: OutcomeId,
+    side: Side,
     charge: Long,
     paid: Long,
     released: Long,

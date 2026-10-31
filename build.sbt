@@ -54,7 +54,8 @@ lazy val marketsDomain = project
 
 lazy val exchangeComponents = project
   .in(file("modules/exchange-components"))
-  .dependsOn(exchangeDomain)
+  // The suites are the example consumer (research R11): it builds both libraries.
+  .dependsOn(exchangeDomain, marketsComponents % Test)
   .settings(common)
   .settings(
     name := "ankka-predictions-exchange-components",

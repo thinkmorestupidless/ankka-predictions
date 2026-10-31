@@ -333,6 +333,49 @@ that (`notes/casino-requests.md`, item 9).
 - **2026-10-31, the analysis.** Its C1 rewrote R7 and R8 (the reservation in a workflow, not the
   entity); C2 reworded the spec to one value per market; H1 builds `Open` and the cost here, since
   the components' scenarios start from an open market; the rest were wording.
+- **2026-10-31, V2.** Holds as ankka's own suites use it (`new View.Companion[...](...) { ... }`
+  inside a class): the descriptor sees the body's handlers. But a handler declared in an anonymous
+  subclass is not reachable through its parent type without reflection, and a caller needs the
+  handle, so a companion that closes over a port is a named class (`PlacementWorkflow(ports)`,
+  `SettlementConsumer(ledger)`, `MarketEntityCompanion(resolution)`, `MarketTimersCompanion`,
+  `MarketScheduleConsumer`). A component that needs no port stays an object (`ExchangeEntity`,
+  `PositionRows`, `ExchangeTimers`, `CatalogueRows`); the exchange entity needs none, since it
+  calls no port (R7).
+- **2026-10-31, V5 fails; R9's fallback is taken.** In ankka 0.14.2 an entity's context has no
+  timer scheduler: only a timed action's context (`timers`) and the started `TimerRuntime`
+  (`timerScheduler`) have one. So `MarketPorts` carries `timers: () => TimerScheduler`, asked only
+  once the service has started, and a consumer of the markets' events, `market-schedule`, sets
+  each market's timer for its `nextDue` after every change, or deletes it when nothing is due.
+  This is after every event rather than in the command (T034 said "after every command"), and at
+  least once; a timer is named by its market, so a repeat sets the same one. `MarketsComponentsSuite`
+  holds it: an approved market with an open time two seconds ahead opens by its timer. The
+  exchange's close is the consumer's to schedule (R9); `ExchangeTimers.scheduleClose` does it.
+- **2026-10-31, a refusal crosses the component client as JSON in the message.** ankka 0.14.2's
+  wire carries a rejection's message and code (`wire.Rejected`) and drops a `CommandError`'s
+  details, so a refusal sent as details reached the placement workflow as a bare message and was
+  taken for a fault. `Refused.error` writes the refusal as JSON in the message
+  (`{"reason":"not built","names":{"command":"place"}}`) under a refusal's code (bad request,
+  conflict, forbidden); `Refused.unapply` reads it back only under those codes. A request to
+  ankka is recorded below.
+- **2026-10-31, the ledger's patience is kept by the `reserve` step.** ankka's `RecoverStrategy`
+  counts retries and has no duration, so R8's "retried with the runtime's backoff until the
+  patience is spent" cannot be declared. The step asks again with a pause from 50 ms doubling to
+  one second until the patience is spent, then transitions to `unavailable`; its declared timeout
+  is the patience plus ten seconds, with failover to `unavailable` for a fault the step does not
+  catch.
+- **2026-10-31, a leg names its outcome and side.** `Leg` gains `outcome` and `side`, so a trade
+  says what it did to each position without its orders: the positions view (`exchange-positions`)
+  reads holdings from the events alone, by `PositionMoves`, the same rule `Exchange.replay`
+  applies, so the two cannot drift. Shares resting under a sell are the entity's to answer
+  (`position`), since a cancel's event does not say what it rested.
+- **2026-10-31, the crash tests.** `PlacementSuite` holds a ledger call open, restarts the service
+  and lets the call go: stopped in `reserve`, the step runs again and the ledger is asked twice
+  under one key, the second a repeat; stopped in `release`, the workflow resumes there and the
+  reservation is not asked again. Until spec 005 the exchange refuses every order as not built, so
+  "the order is accepted" in T039's patience test is "the order reaches the exchange, which
+  refuses it, and the reservation is released under ordinal 0".
+- **2026-10-31, SC-002's entity half** is `ExchangePerfSuite`, skipped with "pending on spec 005"
+  while the domain refuses `place`; it runs the day an order can rest.
 
 ## Requests
 
@@ -340,4 +383,8 @@ that (`notes/casino-requests.md`, item 9).
   rewritten 2026-10-31).
 - To ankka-modules (`notes/casino-requests.md`, item 9): a split charged from a reservation, for a
   trade matched through the pool (R14).
-- To ankka: none from this feature.
+- To ankka: carry a `CommandError`'s details across the component client (`wire.Rejected` has
+  the message and code only), so a refusal's names need no encoding in the message. Until then
+  `Refused` encodes them.
+- To ankka: a scheduler on an entity's context, or a documented way for an entity to set a timer,
+  so the market's timer can be set where its command is decided (V5).

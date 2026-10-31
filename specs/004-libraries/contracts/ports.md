@@ -29,7 +29,8 @@ enum Through:
   * release ordinal (0 when it frees nothing). `Through` and `Leg` are the exchange domain's own
   * types, which the port reuses. */
 final case class Leg(
-    owner: OwnerId, order: OrderId, charge: Long, paid: Long, released: Long, releaseOrdinal: Int
+    owner: OwnerId, order: OrderId, outcome: OutcomeId, side: Side,
+    charge: Long, paid: Long, released: Long, releaseOrdinal: Int
 )
 
 /** Every call names the market, the exchange entity's id, so the consumer can find the market's
@@ -58,8 +59,8 @@ enum GateAnswer:
   case Refused(reason: String)
 
 trait GatePort:
-  /** May this owner place this order, whose cost (a buy) or shares (a sell) are as given. */
-  def mayPlace(owner: OwnerId, market: MarketId, order: OrderRequest): GateAnswer
+  /** May this owner place this order: the domain's own `Place`, so the gate sees what the exchange will. */
+  def mayPlace(owner: OwnerId, market: MarketId, order: ExchangeCommand.Place): GateAnswer
 
 final case class ExchangePorts(
     ledger: LedgerPort,
@@ -85,7 +86,8 @@ trait ResolutionPort:
   /** Suspend and resume: the operator's emergency authority. */
   def maySuspend(operator: OperatorId, market: MarketId): ResolutionAnswer
 
-final case class MarketPorts(resolution: ResolutionPort)
+/** `timers` is the consumer's scheduler, asked for once its service has started (research V5). */
+final case class MarketPorts(resolution: ResolutionPort, timers: () => TimerScheduler)
 ```
 
 ## Rules the components hold at the seam
@@ -99,7 +101,8 @@ final case class MarketPorts(resolution: ResolutionPort)
 | A release is keyed by its order and its ordinal for that order, so an order's second release is not a repeat of its first | 005 FR-005, FR-008, FR-018; R14 | `ExchangeEvent`'s release-carrying cases name the ordinal |
 | A trade names how it was made and every leg's charge, payment and release | 005 FR-011, FR-019; R14 | `settlement` passes the `TradeMade` event's legs |
 | A ledger that throws is retried within `ledgerPatience`, then the order is refused as `ledger unavailable` | 004 edge case, R8 | the `reserve` step's declared recovery |
-| A resolution-port refusal changes nothing | 004 FR-007 | `resolve`, `void`, `approve`, `close`, `suspend`, `resume` ask first |
+| A resolution-port refusal changes nothing | 004 FR-007 | `draft`, `approve`, `suspend`, `resume`, an early `close`, `resolve`, `correct` and `void` ask first; the refusal is forbidden, naming the permission |
+| A refusal reaches a caller whole | R6; research, found during implementation | `Refused` writes it as JSON in the error's message under a refusal's code, since ankka 0.14.2 drops an error's details between components |
 | The components register nothing | 004 FR-006 | no `registerAll` in a library; `descriptors` is a value the consumer passes |
 
 ## Ids

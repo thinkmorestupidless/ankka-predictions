@@ -134,29 +134,16 @@ object Exchange:
         else placed
 
       case e: TradeMade =>
-        val traded = e.legs.foldLeft(exchange) { (x, leg) =>
-          x.orders.get(leg.order).fold(x) { order =>
-            val q = e.quantity
-            val filled = x.withOrder(leg.order)(o =>
-              o.copy(
-                remaining = o.remaining - q,
-                state = OrderState.FilledInPart,
-                releases = if leg.released > 0 then leg.releaseOrdinal else o.releases
-              )
+        val filled = e.legs.foldLeft(exchange) { (x, leg) =>
+          x.withOrder(leg.order)(o =>
+            o.copy(
+              remaining = o.remaining - e.quantity,
+              state = OrderState.FilledInPart,
+              releases = if leg.released > 0 then leg.releaseOrdinal else o.releases
             )
-            filled.withPosition(leg.owner, order.outcome) { p =>
-              order.side match
-                case Side.Buy => p.copy(quantity = p.quantity + q, cost = p.cost + leg.charge)
-                case Side.Sell =>
-                  val sold = if p.quantity == 0 then 0L else p.cost * q / p.quantity
-                  p.copy(
-                    quantity = p.quantity - q,
-                    restingUnderSells = p.restingUnderSells - q,
-                    cost = p.cost - sold
-                  )
-            }
-          }
+          )
         }
+        val traded = moved(filled, e)
         val sets = e.through match
           case Through.Direct => traded.setsOutstanding
           case Through.Split  => traded.setsOutstanding + e.quantity
@@ -174,46 +161,35 @@ object Exchange:
       case e: OrderExpired   => ended(exchange, e.order, OrderState.Expired, e.releaseOrdinal)
 
       case e: SetsSplit =>
-        val perShare =
-          if exchange.outcomes.isEmpty then 0L else exchange.unit / exchange.outcomes.size
-        exchange.outcomes
-          .foldLeft(exchange)((x, outcome) =>
-            x.withPosition(e.owner, outcome)(p =>
-              p.copy(quantity = p.quantity + e.sets, cost = p.cost + e.sets * perShare)
-            )
-          )
-          .copy(
-            setMoves =
-              exchange.setMoves.updated(e.key, SetMove(SetKind.Split, e.owner, e.sets, e.at)),
-            setsOutstanding = exchange.setsOutstanding + e.sets
-          )
+        moved(exchange, e).copy(
+          setMoves =
+            exchange.setMoves.updated(e.key, SetMove(SetKind.Split, e.owner, e.sets, e.at)),
+          setsOutstanding = exchange.setsOutstanding + e.sets
+        )
 
       case e: SetsMerged =>
-        exchange.outcomes
-          .foldLeft(exchange)((x, outcome) =>
-            x.withPosition(e.owner, outcome) { p =>
-              val sold = if p.quantity == 0 then 0L else p.cost * e.sets / p.quantity
-              p.copy(quantity = p.quantity - e.sets, cost = p.cost - sold)
-            }
-          )
-          .copy(
-            setMoves =
-              exchange.setMoves.updated(e.key, SetMove(SetKind.Merge, e.owner, e.sets, e.at)),
-            setsOutstanding = exchange.setsOutstanding - e.sets
-          )
+        moved(exchange, e).copy(
+          setMoves =
+            exchange.setMoves.updated(e.key, SetMove(SetKind.Merge, e.owner, e.sets, e.at)),
+          setsOutstanding = exchange.setsOutstanding - e.sets
+        )
 
       case _: Suspended => exchange.copy(state = ExchangeState.Suspended)
       case _: Resumed   => exchange.copy(state = ExchangeState.Open)
       case _: Closed    => exchange.copy(state = ExchangeState.Closed)
 
-      case e: PositionPaid =>
-        exchange.withPosition(e.owner, e.outcome)(_.copy(quantity = 0, cost = 0))
+      case e: PositionPaid => moved(exchange, e)
 
       case e: RemainderKept => exchange.copy(remainder = exchange.remainder + e.amount)
 
       case e: Final =>
         exchange.copy(state = ExchangeState.Final, setsOutstanding = 0, finality = Some(e.finality))
     next.copy(lastTime = Some(event.at))
+
+  private def moved(exchange: Exchange, event: ExchangeEvent): Exchange =
+    PositionMoves
+      .of(event, exchange.outcomes, exchange.unit)
+      .foldLeft(exchange)((x, m) => x.withPosition(m.owner, m.outcome)(m.move))
 
   private def ended(exchange: Exchange, id: OrderId, state: OrderState, ordinal: Int): Exchange =
     exchange.orders.get(id).fold(exchange) { order =>

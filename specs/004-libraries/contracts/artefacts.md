@@ -79,6 +79,7 @@ never renamed or removed; a field is only added, with a default (spec 004 FR-009
 | the market | `market` | event sourced entity, one per market | commands `draft`, `change`, `approve`, `open`, `suspend`, `resume`, `close`, `move-close`, `resolve`, `correct`, `void`, `finalise`; query `get` |
 | catalogue | `market-catalogue` | view of the markets' changes | queries `by-state`, `by-category` |
 | market timers | `market-timers` | timed action | `due` |
+| market schedule | `market-schedule` | consumer of the markets' events; sets each market's `market-timers` timer for its next due (research V5) | none |
 
 A wire name is declared apart from the Scala method name and never changes (ankka's rule); a new
 behaviour is a new wire name.
@@ -87,6 +88,6 @@ behaviour is a new wire name.
 
 ```scala
 val exchange = ExchangeComponents(ExchangePorts(ledger, gate, ledgerPatience = Duration.ofSeconds(5)))
-val markets  = MarketsComponents(MarketPorts(resolution))
+val markets  = MarketsComponents(MarketPorts(resolution, () => timerRuntime.timerScheduler))
 Ankka.service.registerAll(exchange.descriptors ++ markets.descriptors)   // in the consumer's Main
 ```

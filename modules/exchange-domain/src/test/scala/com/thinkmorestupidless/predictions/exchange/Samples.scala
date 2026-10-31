@@ -30,8 +30,8 @@ object Samples:
         10,
         SortedMap(yes -> 55L),
         Vector(
-          Leg(OwnerId("ada"), OrderId("b-1"), 550, 0, 50, 1),
-          Leg(OwnerId("bob"), OrderId("s-1"), 0, 550, 0, 0)
+          Leg(OwnerId("ada"), OrderId("b-1"), yes, Side.Buy, 550, 0, 50, 1),
+          Leg(OwnerId("bob"), OrderId("s-1"), yes, Side.Sell, 0, 550, 0, 0)
         ),
         t
       ),

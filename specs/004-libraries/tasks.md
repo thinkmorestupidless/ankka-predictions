@@ -81,47 +81,47 @@ Paths: `EX` = `modules/exchange-domain/src/main/scala/com/thinkmorestupidless/pr
 
 **Independent test**: `sbt exchangeComponents/test marketsComponents/test` passes `features/libraries/components.feature` in `AnkkaTestKit` against scripted ports, for the scenarios a stub domain can hold. The trade scenario is pending on spec 005.
 
-- [ ] T024 [P] [US3] Write `EXC/Ports.scala` exactly as `contracts/ports.md` gives it:
+- [X] T024 [P] [US3] Write `EXC/Ports.scala` exactly as `contracts/ports.md` gives it:
   - `Money`, `LedgerAnswer`, and `LedgerPort` with `reserve`, `release(market, order, ordinal, money)`, `settle(market, trade, through, legs)`, `charge`, `pay` and `payout`, every call naming the `MarketId`;
   - `GateAnswer` and `GatePort`;
   - `ExchangePorts(ledger, gate, ledgerPatience)`
-- [ ] T025 [P] [US3] Write `MKC/Ports.scala`: `ResolutionAnswer`, `ResolutionPort` with `mayDraft`, `mayApprove`, `mayResolve`, `mayVoid`, `mayClose` and `maySuspend`, and `MarketPorts`
-- [ ] T026 [P] [US3] Write scripted ports in `modules/exchange-components/src/test/scala/.../ScriptedPorts.scala`:
+- [X] T025 [P] [US3] Write `MKC/Ports.scala`: `ResolutionAnswer`, `ResolutionPort` with `mayDraft`, `mayApprove`, `mayResolve`, `mayVoid`, `mayClose` and `maySuspend`, and `MarketPorts`
+- [X] T026 [P] [US3] Write scripted ports in `modules/exchange-components/src/test/scala/.../ScriptedPorts.scala`:
   - the gate allows or refuses with a reason;
   - the ledger answers done, insufficient or refused, or throws n times and then answers;
   - every call is recorded with its key, so a test can see a repeat answered as the first was.
   Write the same for the resolution port in `modules/markets-components/src/test/scala/.../ScriptedPorts.scala`
-- [ ] T027 [US3] Confirm V2 (a companion as an anonymous subclass inside a class sees its handlers) and V5 (a library entity can schedule the consumer-hosted timed action), each with a throwaway test in `exchangeComponents`. Record the answers in research "Found during implementation". If V5 fails, expose scheduling as a function the consumer calls, as R9 allows
-- [ ] T028 [US3] Bind `features/libraries/components.feature` in `modules/exchange-components/src/test/scala/.../ComponentsFeatures.scala` (exchange scenarios) and `modules/markets-components/src/test/scala/.../ComponentsFeatures.scala` (the resolution-port scenario), on `AnkkaTestKit` with a throwaway Postgres (R11):
+- [X] T027 [US3] Confirm V2 (a companion as an anonymous subclass inside a class sees its handlers) and V5 (a library entity can schedule the consumer-hosted timed action), each with a throwaway test in `exchangeComponents`. Record the answers in research "Found during implementation". If V5 fails, expose scheduling as a function the consumer calls, as R9 allows
+- [X] T028 [US3] Bind `features/libraries/components.feature` in `modules/exchange-components/src/test/scala/.../ComponentsFeatures.scala` (exchange scenarios) and `modules/markets-components/src/test/scala/.../ComponentsFeatures.scala` (the resolution-port scenario), on `AnkkaTestKit` with a throwaway Postgres (R11):
   - the trade scenario is pending on "spec 005";
   - the orchestration scenarios of `features/exchange/orders.feature` are pending on "spec 005" where they need a resting order.
   See them fail
-- [ ] T029 [US3] Write `ExchangeEntity` in `EXC/ExchangeEntity.scala`, with id `exchange` and the wire names of `contracts/artefacts.md`: every command applies the domain and persists its events, a refusal is the domain's `Refusal`, and the entity calls no port (R7); the queries are `get`, `prices`, `depth` and `position`
-- [ ] T029a [US3] Write `Placement` in `EXC/Placement.scala`, the `exchange-placement` workflow of R7, one instance per order with id `<market>/<order>`:
+- [X] T029 [US3] Write `ExchangeEntity` in `EXC/ExchangeEntity.scala`, with id `exchange` and the wire names of `contracts/artefacts.md`: every command applies the domain and persists its events, a refusal is the domain's `Refusal`, and the entity calls no port (R7); the queries are `get`, `prices`, `depth` and `position`
+- [X] T029a [US3] Write `Placement` in `EXC/Placement.scala`, the `exchange-placement` workflow of R7, one instance per order with id `<market>/<order>`:
   - `place` is the start and the claim: a second start under the same id answers the outcome the first recorded, or that it is still running;
   - steps `gate` (the gate port; refused, record and end), `reserve` (a buy only: `ledger.reserve(market, order, Money(cost, owner))`; `Insufficient` or `Refused`, record and end), `apply` (the entity's `place`; a domain refusal of a buy transitions to `release`), `release` (`ledger.release(market, order, 0, ...)`, record the refusal, end) and `unavailable` (record `ledgerUnavailable`, end);
   - settings: `reserve` recovers with retries within `ledgerPatience` and fails over to `unavailable` (R8); `gate` and `apply` have no retries beyond the runtime's;
   - the outcome (accepted with the events' summary, or the refusal) in the state, answered by `outcome`
-- [ ] T030 [US3] Write `Settlement` in `EXC/Settlement.scala`, with id `exchange-settlement`: a consumer of the exchange's events that calls the ledger at least once, naming the entity id as the market.
+- [X] T030 [US3] Write `Settlement` in `EXC/Settlement.scala`, with id `exchange-settlement`: a consumer of the exchange's events that calls the ledger at least once, naming the entity id as the market.
   - `OrderCancelled` and `OrderExpired` → `release` with the event's ordinal;
   - `TradeMade` → `settle` with `through` and `legs`;
   - `SetsSplit` → `charge`, and `SetsMerged` → `pay`;
   - `PositionPaid` → `payout`;
   - a throw is retried, and a refusal is logged with the key and never retried for ever
-- [ ] T031 [P] [US3] Write `PositionRows` in `EXC/PositionRows.scala`: id `exchange-positions`, one row per owner and outcome, query `by-owner`
-- [ ] T032 [P] [US3] Write `ExchangeTimers` in `EXC/ExchangeTimers.scala`: id `exchange-timers`, handler `close`. It applies `Close` at the scheduled time, and returns done when the exchange is already closed
-- [ ] T033 [US3] Write `ExchangeComponents` in `EXC/ExchangeComponents.scala`: built from `ExchangePorts`, holding `exchange`, `placement`, `positions`, `settlement`, `timers` and `descriptors`, with no `registerAll` anywhere (R5)
-- [ ] T034 [US3] Write `MarketEntity` in `MKC/MarketEntity.scala`, with id `market`:
+- [X] T031 [P] [US3] Write `PositionRows` in `EXC/PositionRows.scala`: id `exchange-positions`, one row per owner and outcome, query `by-owner`
+- [X] T032 [P] [US3] Write `ExchangeTimers` in `EXC/ExchangeTimers.scala`: id `exchange-timers`, handler `close`. It applies `Close` at the scheduled time, and returns done when the exchange is already closed
+- [X] T033 [US3] Write `ExchangeComponents` in `EXC/ExchangeComponents.scala`: built from `ExchangePorts`, holding `exchange`, `placement`, `positions`, `settlement`, `timers` and `descriptors`, with no `registerAll` anywhere (R5)
+- [X] T034 [US3] Write `MarketEntity` in `MKC/MarketEntity.scala`, with id `market`:
   - `draft`, `approve`, `suspend`, `resume`, `close`, `resolve`, `correct` and `void` ask the resolution port first;
   - a refusal changes nothing;
   - after every command it reschedules the market's timer for `nextDue` (R9);
   - the query is `get`
-- [ ] T035 [P] [US3] Write `CatalogueRows` in `MKC/CatalogueRows.scala`, with id `market-catalogue` and queries `by-state` and `by-category`. Plan open item 5 still asks whether this view belongs here: keep it minimal, and note in the README that the consumer's product catalogue is its own
-- [ ] T036 [P] [US3] Write `MarketTimers` in `MKC/MarketTimers.scala`: id `market-timers`, handler `due`. It applies `Open`, `Close` or `Finalise` by the market's state when it fires, and returns done when there is nothing to do
-- [ ] T037 [US3] Write `MarketsComponents` in `MKC/MarketsComponents.scala`: `market`, `catalogue`, `timers` and `descriptors`
-- [ ] T038 [US3] Write the "registered by the consumer" scenario: start a service with an empty descriptor list, ask for an exchange, and see none. Then start one with `descriptors`, and the exchange answers
-- [ ] T039 [US3] Run `sbt exchangeComponents/test marketsComponents/test` until every non-pending scenario of T028 passes, including the patience test: the ledger throws twice, then allows, and the order is accepted; it throws past the patience, and the order is refused as `ledger unavailable` with no event. Add the crash tests R7 names: the workflow stopped after `reserve` resumes at `apply` and reserves nothing twice; stopped after `apply`, it ends with the entity's first answer; a domain refusal of a buy is followed by one release under ordinal 0
-- [ ] T039a [US3] Measure spec 004 SC-002's entity half in `modules/exchange-components/src/test/scala/.../ExchangePerfSuite.scala`: `place` through the entity on an exchange of 10,000 resting orders, 10 ms at the median on a laptop, with the ledger scripted to answer at once. Pending on spec 005 until the domain can rest an order; written now so it runs the day spec 005 lands
+- [X] T035 [P] [US3] Write `CatalogueRows` in `MKC/CatalogueRows.scala`, with id `market-catalogue` and queries `by-state` and `by-category`. Plan open item 5 still asks whether this view belongs here: keep it minimal, and note in the README that the consumer's product catalogue is its own
+- [X] T036 [P] [US3] Write `MarketTimers` in `MKC/MarketTimers.scala`: id `market-timers`, handler `due`. It applies `Open`, `Close` or `Finalise` by the market's state when it fires, and returns done when there is nothing to do
+- [X] T037 [US3] Write `MarketsComponents` in `MKC/MarketsComponents.scala`: `market`, `catalogue`, `timers` and `descriptors`
+- [X] T038 [US3] Write the "registered by the consumer" scenario: start a service with an empty descriptor list, ask for an exchange, and see none. Then start one with `descriptors`, and the exchange answers
+- [X] T039 [US3] Run `sbt exchangeComponents/test marketsComponents/test` until every non-pending scenario of T028 passes, including the patience test: the ledger throws twice, then allows, and the order is accepted; it throws past the patience, and the order is refused as `ledger unavailable` with no event. Add the crash tests R7 names: the workflow stopped after `reserve` resumes at `apply` and reserves nothing twice; stopped after `apply`, it ends with the entity's first answer; a domain refusal of a buy is followed by one release under ordinal 0
+- [X] T039a [US3] Measure spec 004 SC-002's entity half in `modules/exchange-components/src/test/scala/.../ExchangePerfSuite.scala`: `place` through the entity on an exchange of 10,000 resting orders, 10 ms at the median on a laptop, with the ledger scripted to answer at once. Pending on spec 005 until the domain can rest an order; written now so it runs the day spec 005 lands
 
 **Checkpoint**: a consumer can build and register both libraries. Trades wait on spec 005.
 
