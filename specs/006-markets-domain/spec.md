@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-21
 
-**Status**: Draft
+**Status**: Built
 
 **Input**: User description: "The `markets-domain` library of spec 004, in full: the value of
 one market from draft to final, the commands applied to it, the refusals and the events. A market
