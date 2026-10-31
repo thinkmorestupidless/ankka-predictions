@@ -46,7 +46,7 @@ from the parent directory's `CLAUDE.md`; this file adds what is specific to this
 | 003 | superseded | the `exchange` service: the book restated in 005; the gates, reservation, facts and stream are eitheror's (ankka-modules 022, 023) |
 | 004 | built | the libraries: the split, the ports, the journal as a contract, publishing by tag |
 | 005 | built | the exchange domain: the value of one market's trading, its commands, events and rules |
-| 006 | draft | the markets domain: the value of one market from draft to final, its commands and events |
+| 006 | building | the markets domain: the value of one market from draft to final, its commands and events |
 
 The checker reads specs from 004 (`specs-from` in `.specify/extensions/bdd/bdd-config.yml`);
 001 to 003 are kept as written. The product's later specs as first listed here (forecasts, web,
