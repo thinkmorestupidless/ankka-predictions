@@ -24,6 +24,9 @@ definitions; adding it would be a protocol change before the first tag for no ru
 and times in the order the data model lists them; the first that fails is the refusal. A finalise
 of a final market is answered with no event before any other check (FR-012).
 
+Where the spec lists refusals without an order (FR-012 names the window before the state), the
+order is this one.
+
 **Rationale**: the state check first means a command on the wrong kind of market is refused for
 that, and never for a field it could not have used; the scenarios expect "naming the state" where
 both would fail (`a draft market may not be voided`).
@@ -130,6 +133,11 @@ no stated draft time is drafted at `2026-09-01T00:00:00Z`, before every time the
 "resolved N hours ago" resolves at now less N hours with the Background's window; "the time T
 comes" applies the command `nextDue` calls for at T (open, close or finalise).
 
+Two steps carry more values than `GherkinSuite`'s six: the full draft (nine) and the correction
+with a time (seven). Each is bound with literal text for the values only its one scenario uses
+(`with the outcomes "yes" and "no" in "GBP"`; `on the evidence "premierleague.com" at
+"https://premierleague.com/tables"`), as spec 005 put the side into the text; no scenario changes.
+
 **Rationale**: the exchange's world (spec 005 R10) proved the shape; seeding through commands
 means a seed that breaks a rule fails loudly instead of testing a market that cannot exist.
 
@@ -188,3 +196,7 @@ categories and currencies).
 
 - ankka-modules `notes/casino-requests.md` item 10: who may change a market or move its close is
   the predictions module's to check before it calls the market (R12).
+
+## Design finished
+
+2026-10-31: analyze reported nothing above LOW.

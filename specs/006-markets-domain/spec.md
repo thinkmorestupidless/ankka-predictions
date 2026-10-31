@@ -209,6 +209,10 @@ purity.
   to have no answer (a wrong outcome is corrected instead); it restarts the window; after the
   window it is refused naming the review window. Spec 002 allowed void from approved, open or
   closed only.
+- A blank reason on a suspend, a move close or a void; evidence missing or with a blank source,
+  locator or excerpt; a review window of negative length; a change to the definition the market
+  already has: refused naming the reason, the evidence, the review window and as no change
+  respectively. An early close without an operator and a reason is refused naming the close.
 - The categories and currencies a product allows: checked by the consumer before the draft
   command; the domain keeps both as text. Spec 002 FR-011 (a category in use cannot be removed)
   is the consumer's and is asked of ankka-modules in `notes/casino-requests.md`.
