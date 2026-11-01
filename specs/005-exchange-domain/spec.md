@@ -235,7 +235,7 @@ from the books and prove nothing the books do not.
 
 Every command yields a refusal naming its reason, with no event and no change, or the next value
 and the events that led to it; replaying the events onto an empty value yields an equal value. A
-command carries the time a rule needs; a market's command earlier than the value's last event is
+command carries the time a rule needs; a market's command earlier than the value's last market event is
 refused as out of order, and an owner's is applied at the value's last time (FR-002). Every event that moves money names the amount, the owner and what the move is keyed
 by: a reservation or a release by the order, a trade's charge and payment by the trade, a split
 or a merge by its key, a payout by the market and the position.
@@ -251,6 +251,8 @@ invariants of FR-010, and every money event carrying its key.
 - changed `features/libraries/domain.feature`: a refused command leaves the book it was applied to unchanged
 - changed `features/libraries/domain.feature`: the time a rule needs is carried by the command, not read
 - added `features/libraries/domain.feature`: an owner's order that reaches the book behind a later event is accepted at the book's time
+- added `features/libraries/domain.feature`: a market's command behind an owner's later event is applied at its own time
+- added `features/libraries/domain.feature`: a market's command older than the market's last one is refused however late owners' events are
 - added `features/libraries/domain.feature`: every event that moves money names the amount, the owner and what it is keyed by
 
 ---
@@ -294,10 +296,14 @@ invariants of FR-010, and every money event carrying its key.
   and the time of its last event.
 - **FR-002**: The commands MUST be open, place, cancel, split, merge, suspend, resume, close and
   finalise, each carrying the time it is applied at. A market's command (open, suspend, resume,
-  close, finalise) whose time is earlier than the value's last event MUST be refused as out of
-  order; an owner's (place, cancel, split, merge) MUST be applied at the value's last time instead,
-  since owners' commands cross on their way to the book (amended 2026-10-31, found by ankka-modules
-  spec 023's SC-002: a placement is gated and funded before it reaches the book). Every command MUST yield either a refusal naming its reason, with no event and
+  close, finalise) whose time is earlier than the value's last market event MUST be refused as out
+  of order, and its events keep its own time; owners' events do not move that clock, since a
+  market's command reaches the book after the owners' that crossed it (amended 2026-11-01, found by
+  ankka-modules spec 023's review: a suspend delivered behind live orders was refused and the book
+  traded on). An owner's command (place, cancel, split, merge) earlier than the value's last event
+  MUST be applied at that time instead, since owners' commands cross on their way to the book
+  (amended 2026-10-31, found by ankka-modules spec 023's SC-002: a placement is gated and funded
+  before it reaches the book). Every command MUST yield either a refusal naming its reason, with no event and
   no change, or the next value and its events; replaying a value's events onto an empty value
   MUST yield an equal value.
 - **FR-003**: The domain MUST read no clock, wallet, player, database or network, and MUST depend
