@@ -32,6 +32,20 @@ Feature: The exchange and markets domains are values
     When an order carrying the time "09:59" is applied to the exchange
     Then the order is accepted and its events carry the time "10:00"
 
+  Scenario: a market's command behind an owner's later event is applied at its own time
+    Given an exchange "m-1" whose last event is at "10:00"
+    And an order reaches the exchange at "10:05"
+    When a suspend carrying the time "10:01" is applied to the exchange
+    Then the exchange is suspended by an event carrying the time "10:01"
+
+  Scenario: a market's command older than the market's last one is refused however late owners' events are
+    Given an exchange "m-1" whose last event is at "10:00"
+    And an order reaches the exchange at "10:05"
+    And a suspend carrying the time "10:02" and a resume carrying the time "10:03" are applied to the exchange
+    When a suspend carrying the time "10:02" is applied to the exchange
+    Then the command is refused as out of order
+    And the exchange is unchanged
+
   Scenario: every event that moves money names the amount, the owner and what it is keyed by
     Given an open exchange "m-1" with the outcomes "yes" and "no" and a unit of "100"
     And "bob" holds "10" shares of "yes" in "m-1"

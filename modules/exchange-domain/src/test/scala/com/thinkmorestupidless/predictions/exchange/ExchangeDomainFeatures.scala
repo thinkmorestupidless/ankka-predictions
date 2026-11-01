@@ -105,6 +105,48 @@ class ExchangeDomainFeatures extends ExchangeSteps("features/libraries/domain.fe
     ): Unit
   }
 
+  Given("an order reaches the exchange at {string}") { (hhmm: String) =>
+    val placed = world.apply(
+      "m-1",
+      ExchangeCommand.Place(
+        OrderId("o-0"),
+        OwnerId("bob"),
+        OutcomeId("yes"),
+        Side.Buy,
+        40,
+        10,
+        OrderDuration.RestUntilClose,
+        time(hhmm)
+      )
+    )
+    assert(placed.isRight, s"the order was refused: $placed")
+    assertEquals(world.value("m-1").lastTime, Some(time(hhmm)))
+  }
+
+  Given(
+    "a suspend carrying the time {string} and a resume carrying the time {string} are applied to the exchange"
+  ) { (suspended: String, resumed: String) =>
+    Seq(ExchangeCommand.Suspend(time(suspended)), ExchangeCommand.Resume(time(resumed))).foreach {
+      c =>
+        val answer = world.apply("m-1", c)
+        assert(answer.isRight, s"$c was refused: $answer")
+    }
+  }
+
+  When("a suspend carrying the time {string} is applied to the exchange") { (hhmm: String) =>
+    world.acted = true
+    world.apply("m-1", ExchangeCommand.Suspend(time(hhmm))): Unit
+  }
+
+  Then("the exchange is suspended by an event carrying the time {string}") { (hhmm: String) =>
+    val events = world.last
+      .flatMap(_.toOption)
+      .map(_.events)
+      .getOrElse(fail(s"the suspend was refused: ${world.last}"))
+    assertEquals(events.map(_.at).distinct, Vector(time(hhmm)))
+    assertEquals(world.value("m-1").state, ExchangeState.Suspended)
+  }
+
   When("a close carrying the time {string} is applied to the exchange") { (hhmm: String) =>
     world.acted = true
     world.apply("m-1", ExchangeCommand.Close(time(hhmm))): Unit

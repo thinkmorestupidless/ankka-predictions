@@ -27,7 +27,8 @@ final case class Exchange(
     nextOrder: Long = 1,
     nextTrade: Long = 1,
     lastTime: Option[Instant] = None,
-    finality: Option[Finality] = None
+    finality: Option[Finality] = None,
+    lastMarketTime: Option[Instant] = None
 ):
 
   def position(owner: OwnerId, outcome: OutcomeId): Position =
@@ -91,7 +92,12 @@ object Exchange:
    */
   def apply(exchange: Exchange, command: ExchangeCommand): Either[Refusal, Decision] =
     val stamped = atTheBook(exchange, command)
-    exchange.lastTime.filter(stamped.at.isBefore) match
+    // A value restored from a snapshot of 0.1.0 has no market clock until its next market event: it
+    // keeps that release's rule, ordering by every event.
+    val since =
+      if isOwners(stamped) then exchange.lastTime
+      else exchange.lastMarketTime.orElse(exchange.lastTime)
+    since.filter(stamped.at.isBefore) match
       case Some(last) => Left(Refusals.outOfOrder(last, stamped.at))
       case None =>
         stamped match
@@ -109,9 +115,17 @@ object Exchange:
    * An owner's command (place, cancel, split, merge) that reaches the book behind a later event is
    * applied at the book's last time: its time is when it was asked, and owners' commands on one
    * book cross on their way to it (a placement is gated and funded first). A market's command
-   * (open, suspend, resume, close, finalise) keeps its own time and is refused when it is older,
-   * which is how a redelivered one is told apart (FR-002).
+   * (open, suspend, resume, close, finalise) keeps its own time and is refused when it is older
+   * than the market's last command, which is how a redelivered one is told apart; owners' events do
+   * not move that clock, since a market's command reaches the book after the owners' that crossed
+   * it (FR-002).
    */
+  private def isOwners(command: ExchangeCommand): Boolean = command match
+    case _: ExchangeCommand.Place | _: ExchangeCommand.Cancel | _: ExchangeCommand.Split |
+        _: ExchangeCommand.Merge =>
+      true
+    case _ => false
+
   private def atTheBook(exchange: Exchange, command: ExchangeCommand): ExchangeCommand =
     def at(t: Instant) = exchange.lastTime.filter(t.isBefore).getOrElse(t)
     command match
@@ -398,7 +412,11 @@ object Exchange:
 
       case e: Final =>
         exchange.copy(state = ExchangeState.Final, setsOutstanding = 0, finality = Some(e.finality))
-    next.copy(lastTime = Some(event.at))
+    val latest = next.lastTime.filter(event.at.isBefore).getOrElse(event.at)
+    event match
+      case _: Opened | _: Suspended | _: Resumed | _: Closed | _: Final =>
+        next.copy(lastTime = Some(latest), lastMarketTime = Some(event.at))
+      case _ => next.copy(lastTime = Some(latest))
 
   private def moved(exchange: Exchange, event: ExchangeEvent): Exchange =
     PositionMoves

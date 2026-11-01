@@ -49,22 +49,32 @@ class JournalCompatibilitySuite extends GherkinSuite("features/libraries/compati
     assert(journals.nonEmpty, "no opened fixture")
   }
 
+  /**
+   * The book as the release that wrote the fixture knew it. A later release may derive a new field
+   * from the same events (0.1.1's `lastMarketTime`, the market's own clock); every field the
+   * earlier release had must replay to its value, and the new one must be what the events give.
+   */
+  private def asRecorded(r: Journal.Replayed[Exchange]): Option[Exchange] =
+    r.recorded.map(x =>
+      if x.lastMarketTime.isEmpty then r.value.copy(lastMarketTime = None) else r.value
+    )
+
+  private def sameBook(name: String, r: Journal.Replayed[Exchange]): Unit =
+    assertEquals(r.failure, None, name)
+    assertEquals(asRecorded(r), r.recorded, name)
+    if r.value.lastTime.nonEmpty then
+      assert(r.value.lastMarketTime.nonEmpty, s"$name: no market time from an opened book")
+
   When("the journal is replayed by the release {string}") { (_: String) =>
     replayed = journals.map((name, lines) => name -> replay(lines))
   }
 
   Then("the rebuilt book equals the book the release {string} rebuilds") { (_: String) =>
-    replayed.foreach { (name, r) =>
-      assertEquals(r.failure, None, name)
-      assertEquals(Some(r.value), r.recorded, name)
-    }
+    replayed.foreach(sameBook)
   }
 
   Then("the event is applied as the release {string} applied it") { (_: String) =>
-    replayed.foreach { (name, r) =>
-      assertEquals(r.failure, None, name)
-      assertEquals(Some(r.value), r.recorded, name)
-    }
+    replayed.foreach(sameBook)
   }
 
   Then("the replay fails naming the manifest {string}") { (manifest: String) =>
