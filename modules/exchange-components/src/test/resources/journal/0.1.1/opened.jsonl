@@ -1,0 +1,2 @@
+exchange-event	{"type":"Opened","market":"m-1","outcomes":["yes","no"],"unit":100,"maxOrderCost":100000,"maxPosition":10000,"at":"2026-10-31T10:00:00Z"}
+state	{"market":"m-1","outcomes":["yes","no"],"unit":100,"maxOrderCost":100000,"maxPosition":10000,"state":"open","books":{"no":{},"yes":{}},"lastTime":"2026-10-31T10:00:00Z","lastMarketTime":"2026-10-31T10:00:00Z"}
