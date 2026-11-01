@@ -107,10 +107,10 @@ object Exchange:
 
   /**
    * An owner's command (place, cancel, split, merge) that reaches the book behind a later event is
-   * applied at the book's last time: its time is when it was asked, and owners' commands on one book
-   * cross on their way to it (a placement is gated and funded first). A market's command (open,
-   * suspend, resume, close, finalise) keeps its own time and is refused when it is older, which is how
-   * a redelivered one is told apart (FR-002).
+   * applied at the book's last time: its time is when it was asked, and owners' commands on one
+   * book cross on their way to it (a placement is gated and funded first). A market's command
+   * (open, suspend, resume, close, finalise) keeps its own time and is refused when it is older,
+   * which is how a redelivered one is told apart (FR-002).
    */
   private def atTheBook(exchange: Exchange, command: ExchangeCommand): ExchangeCommand =
     def at(t: Instant) = exchange.lastTime.filter(t.isBefore).getOrElse(t)

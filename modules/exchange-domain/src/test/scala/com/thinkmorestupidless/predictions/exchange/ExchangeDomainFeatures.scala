@@ -111,7 +111,10 @@ class ExchangeDomainFeatures extends ExchangeSteps("features/libraries/domain.fe
   }
 
   Then("the order is accepted and its events carry the time {string}") { (hhmm: String) =>
-    val events = world.last.flatMap(_.toOption).map(_.events).getOrElse(fail(s"the order was refused: ${world.last}"))
+    val events = world.last
+      .flatMap(_.toOption)
+      .map(_.events)
+      .getOrElse(fail(s"the order was refused: ${world.last}"))
     assert(events.nonEmpty)
     assertEquals(events.map(_.at).distinct, Vector(time(hhmm)))
     assertEquals(world.value("m-1").lastTime, Some(time(hhmm)))
