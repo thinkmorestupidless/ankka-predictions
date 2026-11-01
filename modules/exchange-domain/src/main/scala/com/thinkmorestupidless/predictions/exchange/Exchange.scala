@@ -90,10 +90,11 @@ object Exchange:
    * where the next value is the events replayed onto this one (spec 005 FR-002).
    */
   def apply(exchange: Exchange, command: ExchangeCommand): Either[Refusal, Decision] =
-    exchange.lastTime.filter(command.at.isBefore) match
-      case Some(last) => Left(Refusals.outOfOrder(last, command.at))
+    val stamped = atTheBook(exchange, command)
+    exchange.lastTime.filter(stamped.at.isBefore) match
+      case Some(last) => Left(Refusals.outOfOrder(last, stamped.at))
       case None =>
-        command match
+        stamped match
           case c: ExchangeCommand.Open     => open(exchange, c)
           case c: ExchangeCommand.Place    => place(exchange, c)
           case c: ExchangeCommand.Cancel   => cancel(exchange, c)
@@ -103,6 +104,22 @@ object Exchange:
           case c: ExchangeCommand.Resume   => resume(exchange, c)
           case c: ExchangeCommand.Close    => close(exchange, c)
           case c: ExchangeCommand.Finalise => finalise(exchange, c)
+
+  /**
+   * An owner's command (place, cancel, split, merge) that reaches the book behind a later event is
+   * applied at the book's last time: its time is when it was asked, and owners' commands on one
+   * book cross on their way to it (a placement is gated and funded first). A market's command
+   * (open, suspend, resume, close, finalise) keeps its own time and is refused when it is older,
+   * which is how a redelivered one is told apart (FR-002).
+   */
+  private def atTheBook(exchange: Exchange, command: ExchangeCommand): ExchangeCommand =
+    def at(t: Instant) = exchange.lastTime.filter(t.isBefore).getOrElse(t)
+    command match
+      case c: ExchangeCommand.Place  => c.copy(at = at(c.at))
+      case c: ExchangeCommand.Cancel => c.copy(at = at(c.at))
+      case c: ExchangeCommand.Split  => c.copy(at = at(c.at))
+      case c: ExchangeCommand.Merge  => c.copy(at = at(c.at))
+      case market                    => market
 
   private def open(exchange: Exchange, c: ExchangeCommand.Open): Either[Refusal, Decision] =
     if exchange.state != ExchangeState.Empty then Left(Refusals.state(exchange.state))

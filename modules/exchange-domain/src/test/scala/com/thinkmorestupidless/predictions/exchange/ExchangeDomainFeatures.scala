@@ -105,6 +105,21 @@ class ExchangeDomainFeatures extends ExchangeSteps("features/libraries/domain.fe
     ): Unit
   }
 
+  When("a close carrying the time {string} is applied to the exchange") { (hhmm: String) =>
+    world.acted = true
+    world.apply("m-1", ExchangeCommand.Close(time(hhmm))): Unit
+  }
+
+  Then("the order is accepted and its events carry the time {string}") { (hhmm: String) =>
+    val events = world.last
+      .flatMap(_.toOption)
+      .map(_.events)
+      .getOrElse(fail(s"the order was refused: ${world.last}"))
+    assert(events.nonEmpty)
+    assertEquals(events.map(_.at).distinct, Vector(time(hhmm)))
+    assertEquals(world.value("m-1").lastTime, Some(time(hhmm)))
+  }
+
   Then("the command is refused as out of order")(() => assertEquals(refusal.reason, "out of order"))
 
   private def leg(owner: String): (ExchangeEvent.TradeMade, Leg) =
