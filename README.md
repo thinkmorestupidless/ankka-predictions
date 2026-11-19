@@ -32,7 +32,7 @@ has all of them.
 ## Using them
 
 Pin the release and the ankka it was built against (`V.ankka` in `project/Dependencies.scala`,
-0.16.3):
+0.18.0):
 
 ```scala
 libraryDependencies ++= Seq(

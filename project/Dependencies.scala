@@ -10,7 +10,7 @@ object Dependencies {
      * The ankka the release builds against, and the one a consumer pins (spec 004, assumptions).
      * `-Dankka.version=<v>` overrides it, for a locally published one.
      */
-    val ankka = sys.props.getOrElse("ankka.version", "0.16.3")
+    val ankka = sys.props.getOrElse("ankka.version", "0.18.0")
 
     val munit           = "1.3.6"
     val munitScalacheck = "1.2.0"

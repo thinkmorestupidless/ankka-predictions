@@ -32,7 +32,7 @@ from the parent directory's `CLAUDE.md`; this file adds what is specific to this
 - ankka-reasoning: `../ankka-reasoning`, pinned at 0.2.0 (to be cut from `main`). Its
   `docs/reference/http-api.md` is the contract; its market layer is what `markets` and `exchange`
   write.
-- ankka: `../ankka`, pinned at 0.16.3 in `project/Dependencies.scala` (`-Dankka.version=` for a
+- ankka: `../ankka`, pinned at 0.18.0 in `project/Dependencies.scala` (`-Dankka.version=` for a
   locally published one). Its `CLAUDE.md` rules hold here: handlers return
   effects, wire names are protocol, registration is explicit, events evolve additively, every
   endpoint declares an ACL.
